@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'add_cue.dart'; // 导入新增页面
+import '../models/cue.dart';
+import 'edit_cue.dart'; // 导入新增页面
+import '../utils/database_helper.dart';
 
 class Prompter extends StatelessWidget {
   const Prompter({super.key});
+
+  Future<List<Cue>> _fetchCues() async {
+    return await DatabaseHelper.instance.getAllCues();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +52,7 @@ class Prompter extends StatelessWidget {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const AddCuePage()),
+                                  MaterialPageRoute(builder: (context) => const EditCuePage()),
                                 );
                               },
                             ),
@@ -113,7 +119,7 @@ class Prompter extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const AddCuePage()),
+                            MaterialPageRoute(builder: (context) => const EditCuePage()),
                           );
                         },
                         child: const Text('+ 新建台词'),
@@ -193,29 +199,30 @@ class Prompter extends StatelessWidget {
               color: const Color(0xFFF9F9F9),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: List.generate(11, (index) {
-                    if (index < 10) {
-                      return _buildMyCueCard(
-                        index == 0 ? '未命名台词-2024.12.19' : '晓韵',
-                        '2024.12.19 00:${index.toString().padLeft(2, '0')}',
-                        '去提词',
-                      );
+                child: FutureBuilder<List<Cue>>(
+                  future: _fetchCues(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return const Center(child: Text('加载失败'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('没有台词'));
                     } else {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.0),
-                        child: Center(
-                          child: Text(
-                            '没有更多了！',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+                      final cues = snapshot.data!;
+                      return Column(
+                        children: List.generate(cues.length, (index) {
+                          final cue = cues[index];
+                          return _buildMyCueCard(
+                            cue.title,
+                            cue.createdAt.toString().substring(0, cue.createdAt.toString().lastIndexOf('.')),
+                            cue.content,
+                            '去提词',
+                          );
+                        }),
                       );
                     }
-                  }),
+                  },
                 ),
               ),
             ),
@@ -247,7 +254,7 @@ class Prompter extends StatelessWidget {
     );
   }
 
-  Widget _buildMyCueCard(String title, String date, String action) {
+  Widget _buildMyCueCard(String title, String date, String content, String action) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
       decoration: BoxDecoration(
@@ -284,7 +291,7 @@ class Prompter extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              's的方式对方的身份都是s的方式对方的身份都是s的方式对方的身份都是s的方式对方的身份都是对方的身份都是s的方式对方的身份都是对方的身份都是s的方式对方的身份都是对方的身份都是s的方式对方的身份都是...',
+              content,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],

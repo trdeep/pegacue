@@ -4,14 +4,14 @@ import '../utils/database_helper.dart';
 import '../models/cue.dart';
 
 
-class AddCuePage extends StatefulWidget {
-  const AddCuePage({super.key});
+class EditCuePage extends StatefulWidget {
+  const EditCuePage({super.key});
 
   @override
-  _AddCuePageState createState() => _AddCuePageState();
+  _EditCuePageState createState() => _EditCuePageState();
 }
 
-class _AddCuePageState extends State<AddCuePage> {
+class _EditCuePageState extends State<EditCuePage> {
   final TextEditingController _titleController = TextEditingController();
   final QuillController _quillController = QuillController.basic();
 
@@ -37,23 +37,23 @@ class _AddCuePageState extends State<AddCuePage> {
                   Colors.black,
                 ]
                     .map((color) => GestureDetector(
-                          onTap: () {
-                            _quillController.formatSelection(
-                              Attribute.fromKeyValue('color',
-                                  '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}'),
-                            );
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: color,
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ))
+                  onTap: () {
+                    _quillController.formatSelection(
+                      Attribute.fromKeyValue('color',
+                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}'),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ))
                     .toList(),
               ),
             ),
@@ -64,23 +64,23 @@ class _AddCuePageState extends State<AddCuePage> {
   }
 
   List<Widget> get _toolbarButtons => [
-        QuillToolbarToggleStyleButton(
-          attribute: Attribute.bold,
-          controller: _quillController,
-        ),
-        QuillToolbarToggleStyleButton(
-          attribute: Attribute.underline,
-          controller: _quillController,
-        ),
-        QuillToolbarColorButton(
-          controller: _quillController,
-          isBackground: false,
-        ),
-        const VerticalDivider(),
-        QuillToolbarFontSizeButton(
-          controller: _quillController,
-        ),
-      ];
+    QuillToolbarToggleStyleButton(
+      attribute: Attribute.bold,
+      controller: _quillController,
+    ),
+    QuillToolbarToggleStyleButton(
+      attribute: Attribute.underline,
+      controller: _quillController,
+    ),
+    QuillToolbarColorButton(
+      controller: _quillController,
+      isBackground: false,
+    ),
+    const VerticalDivider(),
+    QuillToolbarFontSizeButton(
+      controller: _quillController,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
