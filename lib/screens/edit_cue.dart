@@ -1,4 +1,3 @@
-import 'package:dart_quill_delta/src/delta/delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import '../utils/database_helper.dart';
@@ -96,6 +95,7 @@ class _EditCuePageState extends State<EditCuePage> {
     final deltaJson = convert.jsonEncode(_quillController.document.toDelta().toJson());
     final wordCount = plainText.replaceAll('\n', '').length;
     final createdAt = DateTime.now();
+
 
     if (widget.id == null) {
       // 保存台词逻辑
