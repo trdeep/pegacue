@@ -1,13 +1,15 @@
 class Cue {
   final int? id;
   final String title;
-  final String content;
+  final String plainText;
+  final String deltaJson;
   final DateTime createdAt;
 
   Cue({
     this.id,
     required this.title,
-    required this.content,
+    required this.plainText,
+    required this.deltaJson,
     required this.createdAt,
   });
 
@@ -15,7 +17,8 @@ class Cue {
     return {
       'id': id,
       'title': title,
-      'content': content,
+      'plainText': plainText,
+      'deltaJson': deltaJson,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -24,7 +27,8 @@ class Cue {
     return Cue(
       id: map['id'],
       title: map['title'],
-      content: map['content'],
+      plainText: map['plainText'],
+      deltaJson: map['deltaJson'],
       createdAt: DateTime.parse(map['created_at']),
     );
   }

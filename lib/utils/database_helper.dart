@@ -30,7 +30,8 @@ class DatabaseHelper {
       CREATE TABLE cues(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        content TEXT NOT NULL,
+        plainText TEXT NOT NULL,
+        deltaJson TEXT NOT NULL,
         created_at TEXT NOT NULL
       )
     ''');

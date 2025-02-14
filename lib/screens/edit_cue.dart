@@ -1,11 +1,16 @@
+import 'package:dart_quill_delta/src/delta/delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import '../utils/database_helper.dart';
 import '../models/cue.dart';
 
-
 class EditCuePage extends StatefulWidget {
-  const EditCuePage({super.key});
+  final int? id;
+  final String? title;
+  final String? date;
+  final String? deltaJson;
+
+  const EditCuePage({super.key, this.id, this.title, this.date, this.deltaJson});
 
   @override
   _EditCuePageState createState() => _EditCuePageState();
@@ -15,78 +20,29 @@ class _EditCuePageState extends State<EditCuePage> {
   final TextEditingController _titleController = TextEditingController();
   final QuillController _quillController = QuillController.basic();
 
-  Widget _getMyColorButton() {
-    return IconButton(
-      icon: const Icon(Icons.color_lens),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('选择颜色'),
-            content: SingleChildScrollView(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Colors.red,
-                  Colors.blue,
-                  Colors.yellow,
-                  Colors.green,
-                  Colors.purple,
-                  Colors.orange,
-                  Colors.black,
-                ]
-                    .map((color) => GestureDetector(
-                  onTap: () {
-                    _quillController.formatSelection(
-                      Attribute.fromKeyValue('color',
-                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}'),
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ))
-                    .toList(),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    if (widget.title != null) {
+      _titleController.text = widget.title!;
+    }
+    if (widget.deltaJson != null) {
+      // todo 这里的 as List 转换可能是错误的
+      _quillController.document = Document.fromJson(widget.deltaJson! as List);
+    }
   }
-
-  List<Widget> get _toolbarButtons => [
-    QuillToolbarToggleStyleButton(
-      attribute: Attribute.bold,
-      controller: _quillController,
-    ),
-    QuillToolbarToggleStyleButton(
-      attribute: Attribute.underline,
-      controller: _quillController,
-    ),
-    QuillToolbarColorButton(
-      controller: _quillController,
-      isBackground: false,
-    ),
-    const VerticalDivider(),
-    QuillToolbarFontSizeButton(
-      controller: _quillController,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('添加台词'),
+        title: const Text('编辑台词'),
+        actions: [
+          IconButton(
+            onPressed: _saveOrUpdateCue,
+            icon: const Icon(Icons.save),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -128,20 +84,8 @@ class _EditCuePageState extends State<EditCuePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () async {
-                  final delta = _quillController.document.toDelta();
-                  final plainText = _quillController.document.toPlainText();
-                  final cue = Cue(
-                    title: _titleController.text,
-                    content: plainText,
-                    createdAt: DateTime.now(),
-                  );
-                  await DatabaseHelper.instance.insertCue(cue);
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('保存'),
+                onPressed: _saveOrUpdateCue,
+                child: Text(widget.id == null ? '保存' : '更新'),
               ),
             ),
           ],
@@ -150,10 +94,49 @@ class _EditCuePageState extends State<EditCuePage> {
     );
   }
 
+  void _saveOrUpdateCue() async {
+    final title = _titleController.text;
+    var empty = _quillController.document.isEmpty();
+    var plainText = _quillController.document.toPlainText();
+    final deltaJson = _quillController.document.toDelta().toJson().toString();
+    final createdAt = DateTime.now();
+
+    if (widget.id == null) {
+      // 保存台词逻辑
+      final cue = Cue(title: title, plainText: plainText, deltaJson: deltaJson, createdAt: createdAt);
+      await DatabaseHelper.instance.insertCue(cue);
+    } else {
+      // 更新台词逻辑
+      final cue = Cue(id: widget.id, title: title, plainText: plainText, deltaJson: deltaJson, createdAt: createdAt);
+      await DatabaseHelper.instance.updateCue(cue);
+    }
+
+    Navigator.pop(context);
+  }
+
   @override
   void dispose() {
     _quillController.dispose();
     _titleController.dispose();
     super.dispose();
   }
+
+  List<Widget> get _toolbarButtons => [
+    QuillToolbarToggleStyleButton(
+      attribute: Attribute.bold,
+      controller: _quillController,
+    ),
+    QuillToolbarToggleStyleButton(
+      attribute: Attribute.underline,
+      controller: _quillController,
+    ),
+    QuillToolbarColorButton(
+      controller: _quillController,
+      isBackground: false,
+    ),
+    const VerticalDivider(),
+    QuillToolbarFontSizeButton(
+      controller: _quillController,
+    ),
+  ];
 }

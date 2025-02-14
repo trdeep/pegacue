@@ -3,8 +3,21 @@ import '../models/cue.dart';
 import 'edit_cue.dart'; // 导入新增页面
 import '../utils/database_helper.dart';
 
-class Prompter extends StatelessWidget {
+class Prompter extends StatefulWidget {
   const Prompter({super.key});
+
+  @override
+  _PrompterState createState() => _PrompterState();
+}
+
+class _PrompterState extends State<Prompter> {
+  late Future<List<Cue>> _cuesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cuesFuture = _fetchCues();
+  }
 
   Future<List<Cue>> _fetchCues() async {
     return await DatabaseHelper.instance.getAllCues();
@@ -53,7 +66,11 @@ class Prompter extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (context) => const EditCuePage()),
-                                );
+                                ).then((_) {
+                                  setState(() {
+                                    _cuesFuture = _fetchCues();
+                                  });
+                                });
                               },
                             ),
                           ],
@@ -120,7 +137,11 @@ class Prompter extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const EditCuePage()),
-                          );
+                          ).then((_) {
+                            setState(() {
+                              _cuesFuture = _fetchCues();
+                            });
+                          });
                         },
                         child: const Text('+ 新建台词'),
                       ),
@@ -200,7 +221,7 @@ class Prompter extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: FutureBuilder<List<Cue>>(
-                  future: _fetchCues(),
+                  future: _cuesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -214,9 +235,12 @@ class Prompter extends StatelessWidget {
                         children: List.generate(cues.length, (index) {
                           final cue = cues[index];
                           return _buildMyCueCard(
+                            context,
+                            cue.id!,
                             cue.title,
                             cue.createdAt.toString().substring(0, cue.createdAt.toString().lastIndexOf('.')),
-                            cue.content,
+                            cue.plainText,
+                            cue.deltaJson,
                             '去提词',
                           );
                         }),
@@ -254,95 +278,114 @@ class Prompter extends StatelessWidget {
     );
   }
 
-  Widget _buildMyCueCard(String title, String date, String content, String action) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+  Widget _buildMyCueCard(BuildContext context, int id, String title, String date, String plainText, String deltaJson, String action) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditCuePage(
+              id: id,
+              title: title,
+              date: date,
+              deltaJson: deltaJson,
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Icon(
-                  Icons.more_horiz,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              content,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[400],
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '122字/预计录0分40秒',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: 去提词
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.orange[50],
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        action,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.orange[400],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+        ).then((_) {
+          setState(() {
+            _cuesFuture = _fetchCues();
+          });
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.more_horiz,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                plainText,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    date,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        '122字/预计录0分40秒',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: 去提词
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.orange[50],
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          action,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[400],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
