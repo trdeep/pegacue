@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_cue_page.dart'; // 导入新增页面
+import 'add_cue.dart'; // 导入新增页面
 
 class Prompter extends StatelessWidget {
   const Prompter({super.key});

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import '../utils/database_helper.dart';
+import '../models/cue.dart';
 
 
 class AddCuePage extends StatefulWidget {
@@ -126,10 +128,18 @@ class _AddCuePageState extends State<AddCuePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final delta = _quillController.document.toDelta();
                   final plainText = _quillController.document.toPlainText();
-                  // 保存台词逻辑
+                  final cue = Cue(
+                    title: _titleController.text,
+                    content: plainText,
+                    createdAt: DateTime.now(),
+                  );
+                  await DatabaseHelper.instance.insertCue(cue);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
                 },
                 child: const Text('保存'),
               ),
