@@ -41,6 +41,8 @@ dependencies:
   sqflite: ^2.4.1
 #  markdown: ^7.3.0
   html_editor_enhanced: ^2.6.0
+  #flutter_quill_delta_from_html: ^1.5.0
+  vsc_quill_delta_to_html: ^1.0.5
 
 dev_dependencies:
   flutter_test:

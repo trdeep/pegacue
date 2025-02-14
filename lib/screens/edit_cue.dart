@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 import '../utils/database_helper.dart';
 import '../models/cue.dart';
 import 'dart:convert' as convert;
+
 
 class EditCuePage extends StatefulWidget {
   final int? id;
@@ -92,10 +94,17 @@ class _EditCuePageState extends State<EditCuePage> {
   void _saveOrUpdateCue() async {
     final title = _titleController.text;
     final plainText = _quillController.document.toPlainText();
-    final deltaJson = convert.jsonEncode(_quillController.document.toDelta().toJson());
+    var delta = _quillController.document.toDelta();
+    final deltaJson = convert.jsonEncode(delta.toJson());
     final wordCount = plainText.replaceAll('\n', '').length;
     final createdAt = DateTime.now();
 
+    var converterOptions = ConverterOptions.forEmail();
+    final converter = QuillDeltaToHtmlConverter(delta.toJson(), converterOptions);
+
+    final html = converter.convert();
+
+    print(html);
 
     if (widget.id == null) {
       // 保存台词逻辑
