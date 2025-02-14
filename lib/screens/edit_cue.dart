@@ -39,12 +39,6 @@ class _EditCuePageState extends State<EditCuePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('编辑台词'),
-        actions: [
-          IconButton(
-            onPressed: _saveOrUpdateCue,
-            icon: const Icon(Icons.save),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
