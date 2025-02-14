@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import '../utils/database_helper.dart';
 import '../models/cue.dart';
+import 'dart:convert' as convert;
 
 class EditCuePage extends StatefulWidget {
   final int? id;
@@ -10,7 +11,8 @@ class EditCuePage extends StatefulWidget {
   final String? date;
   final String? deltaJson;
 
-  const EditCuePage({super.key, this.id, this.title, this.date, this.deltaJson});
+  const EditCuePage(
+      {super.key, this.id, this.title, this.date, this.deltaJson});
 
   @override
   _EditCuePageState createState() => _EditCuePageState();
@@ -27,8 +29,8 @@ class _EditCuePageState extends State<EditCuePage> {
       _titleController.text = widget.title!;
     }
     if (widget.deltaJson != null) {
-      // todo 这里的 as List 转换可能是错误的
-      _quillController.document = Document.fromJson(widget.deltaJson! as List);
+      _quillController.document =
+          Document.fromJson(convert.jsonDecode(widget.deltaJson!));
     }
   }
 
@@ -96,18 +98,29 @@ class _EditCuePageState extends State<EditCuePage> {
 
   void _saveOrUpdateCue() async {
     final title = _titleController.text;
-    var empty = _quillController.document.isEmpty();
-    var plainText = _quillController.document.toPlainText();
-    final deltaJson = _quillController.document.toDelta().toJson().toString();
+    final plainText = _quillController.document.toPlainText();
+    final deltaJson = convert.jsonEncode(_quillController.document.toDelta().toJson());
+    final wordCount = plainText.replaceAll('\n', '').length;
     final createdAt = DateTime.now();
 
     if (widget.id == null) {
       // 保存台词逻辑
-      final cue = Cue(title: title, plainText: plainText, deltaJson: deltaJson, createdAt: createdAt);
+      final cue = Cue(
+          title: title,
+          plainText: plainText,
+          deltaJson: deltaJson,
+          wordCount: wordCount,
+          createdAt: createdAt);
       await DatabaseHelper.instance.insertCue(cue);
     } else {
       // 更新台词逻辑
-      final cue = Cue(id: widget.id, title: title, plainText: plainText, deltaJson: deltaJson, createdAt: createdAt);
+      final cue = Cue(
+          id: widget.id,
+          title: title,
+          plainText: plainText,
+          deltaJson: deltaJson,
+          wordCount: wordCount,
+          createdAt: createdAt);
       await DatabaseHelper.instance.updateCue(cue);
     }
 
@@ -122,21 +135,21 @@ class _EditCuePageState extends State<EditCuePage> {
   }
 
   List<Widget> get _toolbarButtons => [
-    QuillToolbarToggleStyleButton(
-      attribute: Attribute.bold,
-      controller: _quillController,
-    ),
-    QuillToolbarToggleStyleButton(
-      attribute: Attribute.underline,
-      controller: _quillController,
-    ),
-    QuillToolbarColorButton(
-      controller: _quillController,
-      isBackground: false,
-    ),
-    const VerticalDivider(),
-    QuillToolbarFontSizeButton(
-      controller: _quillController,
-    ),
-  ];
+        QuillToolbarToggleStyleButton(
+          attribute: Attribute.bold,
+          controller: _quillController,
+        ),
+        QuillToolbarToggleStyleButton(
+          attribute: Attribute.underline,
+          controller: _quillController,
+        ),
+        QuillToolbarColorButton(
+          controller: _quillController,
+          isBackground: false,
+        ),
+        const VerticalDivider(),
+        QuillToolbarFontSizeButton(
+          controller: _quillController,
+        ),
+      ];
 }

@@ -10,7 +10,7 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('pegacue.db');
+    _database = await _initDB('pegacue6.db');
     return _database!;
   }
 
@@ -30,8 +30,9 @@ class DatabaseHelper {
       CREATE TABLE cues(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        plainText TEXT NOT NULL,
-        deltaJson TEXT NOT NULL,
+        plain_text TEXT NOT NULL,
+        delta_json TEXT NOT NULL,
+        word_count INTEGER NOT NULL,
         created_at TEXT NOT NULL
       )
     ''');
