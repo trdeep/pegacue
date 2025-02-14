@@ -106,6 +106,10 @@ class _EditCuePageState extends State<EditCuePage> {
           wordCount: wordCount,
           createdAt: createdAt);
       await DatabaseHelper.instance.insertCue(cue);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('添加成功')),
+      );
     } else {
       // 更新台词逻辑
       final cue = Cue(
@@ -116,6 +120,10 @@ class _EditCuePageState extends State<EditCuePage> {
           wordCount: wordCount,
           createdAt: createdAt);
       await DatabaseHelper.instance.updateCue(cue);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('更新成功')),
+      );
     }
 
     Navigator.pop(context);

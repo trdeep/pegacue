@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../utils/database_helper.dart';
 import '../screens/edit_cue.dart';
 
 class CueCard extends StatelessWidget {
@@ -70,9 +70,24 @@ class CueCard extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const Icon(
-                    Icons.more_horiz,
-                    color: Colors.grey,
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == '删除') {
+                        _deleteCue(context);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: '删除',
+                          child: Text('删除'),
+                        ),
+                      ];
+                    },
+                    icon: const Icon(
+                      Icons.more_horiz,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -100,7 +115,7 @@ class CueCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        wordCount.toString() + '字/预计录'+_formatDuration((wordCount/2).toInt()),
+                        '$wordCount字/预计录${_formatDuration((wordCount / 2).toInt())}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[400],
@@ -136,7 +151,13 @@ class CueCard extends StatelessWidget {
     );
   }
 
-
+  void _deleteCue(BuildContext context) async {
+    await DatabaseHelper.instance.deleteCue(id);
+    onUpdate();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('台词已删除')),
+    );
+  }
 
   String _formatDuration(int totalSeconds) {
     if (totalSeconds < 0) return "0秒";
@@ -161,5 +182,4 @@ class CueCard extends StatelessWidget {
 
     return result.toString();
   }
-
 }
