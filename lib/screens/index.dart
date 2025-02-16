@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'prompter.dart';
 import 'mine.dart';
-
+///
+/// 主页框架
+///
 class IndexPage extends StatefulWidget {
   const IndexPage({super.key});
 

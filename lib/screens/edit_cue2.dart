@@ -4,7 +4,9 @@ import '../utils/database_helper.dart';
 import '../models/cue.dart';
 
 import '../utils/tools.dart';
-
+///
+/// 编辑台词
+///
 class EditCuePage2 extends StatefulWidget {
   final int? id;
   final String? title;

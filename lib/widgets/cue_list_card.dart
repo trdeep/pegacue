@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../utils/database_helper.dart';
 import '../screens/edit_cue.dart';
 import '../screens/teleprompter.dart';
-
+///
+/// 台词列表卡片
+///
 class CueCard extends StatelessWidget {
   final int id;
   final String title;

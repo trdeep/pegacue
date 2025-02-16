@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/cue.dart';
-import '../widgets/cue_card.dart';
-import 'edit_cue.dart'; // 导入新增页面
+import '../widgets/cue_list_card.dart';
+import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
+///
+/// 主界面
+///
 class Prompter extends StatefulWidget {
   const Prompter({super.key});
 

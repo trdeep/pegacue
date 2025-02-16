@@ -5,7 +5,9 @@ import '../models/cue.dart';
 import 'dart:convert' as convert;
 
 import '../utils/tools.dart';
-
+///
+/// 编辑台词
+///
 class EditCuePage extends StatefulWidget {
   final int? id;
   final String? title;

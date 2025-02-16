@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+///
+/// 个人中心
+///
 class Mine extends StatelessWidget {
   const Mine({super.key});
 

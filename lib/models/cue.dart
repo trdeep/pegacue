@@ -1,3 +1,6 @@
+///
+/// 台词数据模型
+///
 class Cue {
   final int? id;
   final String title;
