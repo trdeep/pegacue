@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter_plus/webview_flutter_plus.dart';
 import '../utils/tools.dart';
+
 ///
 /// 提词板
 ///
@@ -21,7 +22,7 @@ class TeleprompterPage extends StatefulWidget {
 
 class _TeleprompterPageState extends State<TeleprompterPage> {
   late WebViewControllerPlus _controller;
-  bool _isLoading = true;
+  bool _isScrolling = false;
   late final String _htmlContent;
 
   @override
@@ -45,11 +46,23 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
             font-size: 50px;
             line-height: 1.2;
             overflow-x: hidden;
+            padding-bottom: 60px; // 添加底部间距
           }
           ::-webkit-scrollbar {
             display: none;
           }
         </style>
+        <script>
+          var scrollInterval;
+          function startScroll() {
+            scrollInterval = setInterval(() => {
+              window.scrollBy(0, 1);
+            }, 50);
+          }
+          function stopScroll() {
+            clearInterval(scrollInterval);
+          }
+        </script>
       </head>
       <body>
         ${deltaJsonToHtml(widget.deltaJson)}
@@ -60,14 +73,49 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
     _controller = WebViewControllerPlus()
       ..setBackgroundColor(Colors.black)
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
-    
+
     await _controller.loadHtmlString(_htmlContent);
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+  }
+
+  void _toggleScroll() async {
+    setState(() {
+      _isScrolling = !_isScrolling;
+    });
+
+    if (_isScrolling) {
+      await _controller.runJavaScript('startScroll()');
+    } else {
+      await _controller.runJavaScript('stopScroll()');
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // WebView
+          WebViewWidget(controller: _controller),
+
+          // 控制按钮
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 20, // 底部间距
+            child: Center(
+              child: FloatingActionButton(
+                onPressed: _toggleScroll,
+                backgroundColor: Colors.orange.withOpacity(0.7),
+                child: Icon(
+                  _isScrolling ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -78,11 +126,5 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
       overlays: SystemUiOverlay.values,
     );
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: WebViewWidget(controller: _controller));
   }
 }
