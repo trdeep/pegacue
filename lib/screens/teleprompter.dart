@@ -23,12 +23,12 @@ class TeleprompterPage extends StatefulWidget {
 class _TeleprompterPageState extends State<TeleprompterPage> {
   late WebViewControllerPlus _controller;
   bool _isScrolling = false;
+  bool _isLoading = true;  // 添加加载状态
   late final String _htmlContent;
 
   @override
   void initState() {
     super.initState();
-    // 隐藏状态栏
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     _initializeWebView();
   }
@@ -41,12 +41,14 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           body {
+            margin: 0;
+            padding: 0;
             background-color: black;
             color: white;
             font-size: 50px;
             line-height: 1.2;
             overflow-x: hidden;
-            padding-bottom: 60px; // 添加底部间距
+            padding-bottom: 60px;
           }
           ::-webkit-scrollbar {
             display: none;
@@ -62,17 +64,34 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
           function stopScroll() {
             clearInterval(scrollInterval);
           }
+          // 修改为使用 JavaScript Channel
+          window.onload = function() {
+            PageLoaded.postMessage('loaded');
+          }
         </script>
       </head>
-      <body>
+      <body style="visibility: hidden">
         ${deltaJsonToHtml(widget.deltaJson)}
       </body>
     </html>
-    ''';
+  ''';
 
     _controller = WebViewControllerPlus()
       ..setBackgroundColor(Colors.black)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'PageLoaded',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+            _controller.runJavaScript(
+                "document.body.style.visibility = 'visible';"
+            );
+          }
+        },
+      );
 
     await _controller.loadHtmlString(_htmlContent);
   }
@@ -92,27 +111,40 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // 设置背景色为黑色
       body: Stack(
         children: [
           // WebView
           WebViewWidget(controller: _controller),
-
-          // 控制按钮
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 20, // 底部间距
-            child: Center(
-              child: FloatingActionButton(
-                onPressed: _toggleScroll,
-                backgroundColor: Colors.orange.withOpacity(0.7),
-                child: Icon(
-                  _isScrolling ? Icons.pause : Icons.play_arrow,
-                  color: Colors.white,
+          
+          // 加载指示器
+          if (_isLoading)
+            Container(
+              color: Colors.black,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.orange,
                 ),
               ),
             ),
-          ),
+
+          // 控制按钮
+          if (!_isLoading)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 20,
+              child: Center(
+                child: FloatingActionButton(
+                  onPressed: _toggleScroll,
+                  backgroundColor: Colors.orange.withOpacity(0.7),
+                  child: Icon(
+                    _isScrolling ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

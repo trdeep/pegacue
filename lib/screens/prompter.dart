@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pegacue/screens/teleprompter.dart';
 import '../models/cue.dart';
 import '../widgets/cue_list_card.dart';
+import '../widgets/cue_selector_dialog.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
@@ -289,9 +291,34 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-  Widget _buildFeatureItem(
-      String title, String subtitle, IconData icon, Color color) {
-    return Container(
+  Widget _buildFeatureItem(String title, String subtitle, IconData icon, Color color) {
+  return GestureDetector(
+    onTap: () {
+      showDialog(
+        context: context,
+        builder: (context) => CueSelectorDialog(
+          title: '选择台词',
+          onCueSelected: (cue) {
+            if (title == '提词板') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TeleprompterPage(
+                    title: cue.title,
+                    deltaJson: cue.deltaJson,
+                  ),
+                ),
+              );
+            } else if (title == '悬浮提词') {
+              // TODO: 实现悬浮提词功能
+            } else if (title == '拍摄提词') {
+              // TODO: 实现拍摄提词功能 
+            }
+          },
+        ),
+      );
+    },
+    child: Container(
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -309,8 +336,10 @@ class _PrompterState extends State<Prompter> {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
 
 class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
