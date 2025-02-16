@@ -62,11 +62,14 @@ class _PrompterState extends State<Prompter> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.add_circle_outline, color: Colors.orange, size: 32),
+                              icon: const Icon(Icons.add_circle_outline,
+                                  color: Colors.orange, size: 32),
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const EditCuePage()),
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditCuePage()),
                                 ).then((_) {
                                   setState(() {
                                     _cuesFuture = _fetchCues();
@@ -83,17 +86,32 @@ class _PrompterState extends State<Prompter> {
                         children: [
                           Expanded(
                             flex: 5,
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 30),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                '佩嘉提词器可悬浮在任意App之上，你可以在抖音、快手、原相机等软件上使用，适用于直播/短视频等场景。',
-                                style: TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
-                              ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final screenWidth =
+                                    MediaQuery.of(context).size.width;
+                                final fontSize = screenWidth * 0.032;
+                                final padding = screenWidth * 0.03;
+
+                                return Container(
+                                  padding: EdgeInsets.all(padding),
+                                  // 将 margin 修改为固定的底部间距
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '佩嘉提词器可悬浮在任意App之上，你可以在抖音、快手、原相机等软件上使用，适用于直播/短视频等场景。',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: fontSize,
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.justify,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const Expanded(
@@ -111,6 +129,7 @@ class _PrompterState extends State<Prompter> {
           // 主要内容区域（白色背景部分）
           SliverToBoxAdapter(
             child: Container(
+              //color: const Color(0xFFF9F9F9),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: const BorderRadius.only(
@@ -137,7 +156,8 @@ class _PrompterState extends State<Prompter> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const EditCuePage()),
+                            MaterialPageRoute(
+                                builder: (context) => const EditCuePage()),
                           ).then((_) {
                             setState(() {
                               _cuesFuture = _fetchCues();
@@ -159,9 +179,12 @@ class _PrompterState extends State<Prompter> {
                       padding: const EdgeInsets.all(16.0),
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        _buildFeatureItem('悬浮提词', '可直播可拍摄', Icons.slideshow, Colors.orange),
-                        _buildFeatureItem('拍摄提词', 'App拍摄剪辑', Icons.camera_alt, Colors.blue),
-                        _buildFeatureItem('提词板', '', Icons.view_agenda, Colors.green),
+                        _buildFeatureItem(
+                            '悬浮提词', '可直播可拍摄', Icons.slideshow, Colors.orange),
+                        _buildFeatureItem(
+                            '拍摄提词', 'App拍摄剪辑', Icons.camera_alt, Colors.blue),
+                        _buildFeatureItem(
+                            '提词板', '', Icons.view_agenda, Colors.green),
                       ],
                     ),
                   ),
@@ -187,16 +210,17 @@ class _PrompterState extends State<Prompter> {
                           ),
                           Container(
                             height: 60,
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Row(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: const Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.description_outlined,
                                   size: 20,
                                   color: Colors.black87,
                                 ),
-                                const SizedBox(width: 8),
-                                const Text(
+                                SizedBox(width: 8),
+                                Text(
                                   '我的台词',
                                   style: TextStyle(
                                     fontSize: 18,
@@ -262,7 +286,8 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-  Widget _buildFeatureItem(String title, String subtitle, IconData icon, Color color) {
+  Widget _buildFeatureItem(
+      String title, String subtitle, IconData icon, Color color) {
     return Container(
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
@@ -283,7 +308,6 @@ class _PrompterState extends State<Prompter> {
       ),
     );
   }
-
 }
 
 class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
@@ -302,7 +326,8 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return SizedBox.expand(child: child);
   }
 

@@ -39,10 +39,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_quill: ^10.8.5
   sqflite: ^2.4.1
-#  markdown: ^7.3.0
+  markdown: ^7.3.0
   html_editor_enhanced: ^2.6.0
+#  markdown_editor_plus: ^0.2.15
   #flutter_quill_delta_from_html: ^1.5.0
   vsc_quill_delta_to_html: ^1.0.5
+#  webview_flutter: ^4.10.0
+  webview_flutter_plus: ^0.4.10
+#  html_editor_plus: ^0.0.5
 
 dev_dependencies:
   flutter_test:

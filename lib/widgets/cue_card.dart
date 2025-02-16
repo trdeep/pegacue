@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/database_helper.dart';
 import '../screens/edit_cue.dart';
+import '../screens/teleprompter.dart';
 
 class CueCard extends StatelessWidget {
   final int id;
@@ -108,7 +109,7 @@ class CueCard extends StatelessWidget {
                   Text(
                     date,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
                       color: Colors.grey[400],
                     ),
                   ),
@@ -117,14 +118,22 @@ class CueCard extends StatelessWidget {
                       Text(
                         '$wordCount字/预计录${_formatDuration((wordCount / 2).toInt())}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
                           color: Colors.grey[400],
                         ),
                       ),
                       const SizedBox(width: 16),
                       TextButton(
                         onPressed: () {
-                          // TODO: 去提词
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TeleprompterPage(
+                                title: title,
+                                deltaJson: deltaJson,
+                              ),
+                            ),
+                          );
                         },
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.orange[50],

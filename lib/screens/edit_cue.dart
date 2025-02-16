@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 import '../utils/database_helper.dart';
 import '../models/cue.dart';
 import 'dart:convert' as convert;
 
+import '../utils/tools.dart';
 
 class EditCuePage extends StatefulWidget {
   final int? id;
@@ -22,6 +22,11 @@ class EditCuePage extends StatefulWidget {
 class _EditCuePageState extends State<EditCuePage> {
   final TextEditingController _titleController = TextEditingController();
   final QuillController _quillController = QuillController.basic();
+  final FocusNode _focusNode = FocusNode();
+
+  void _hideKeyboard() {
+    _focusNode.unfocus();
+  }
 
   @override
   void initState() {
@@ -54,6 +59,18 @@ class _EditCuePageState extends State<EditCuePage> {
               ),
             ),
             const SizedBox(height: 16),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: QuillEditor.basic(
+                    controller: _quillController, focusNode: _focusNode),
+              ),
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
@@ -65,19 +82,6 @@ class _EditCuePageState extends State<EditCuePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                padding: const EdgeInsets.all(8),
-                child: QuillEditor.basic(
-                  controller: _quillController,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -93,18 +97,12 @@ class _EditCuePageState extends State<EditCuePage> {
 
   void _saveOrUpdateCue() async {
     final title = _titleController.text;
-    final plainText = _quillController.document.toPlainText();
-    var delta = _quillController.document.toDelta();
+    final document = _quillController.document;
+    final plainText = document.toPlainText();
+    final delta = document.toDelta();
     final deltaJson = convert.jsonEncode(delta.toJson());
     final wordCount = plainText.replaceAll('\n', '').length;
     final createdAt = DateTime.now();
-
-    var converterOptions = ConverterOptions.forEmail();
-    final converter = QuillDeltaToHtmlConverter(delta.toJson(), converterOptions);
-
-    final html = converter.convert();
-
-    print(html);
 
     if (widget.id == null) {
       // 保存台词逻辑
@@ -142,6 +140,7 @@ class _EditCuePageState extends State<EditCuePage> {
   void dispose() {
     _quillController.dispose();
     _titleController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -154,13 +153,25 @@ class _EditCuePageState extends State<EditCuePage> {
           attribute: Attribute.underline,
           controller: _quillController,
         ),
+        QuillToolbarClearFormatButton(controller: _quillController),
+
         QuillToolbarColorButton(
           controller: _quillController,
           isBackground: false,
         ),
-        const VerticalDivider(),
-        QuillToolbarFontSizeButton(
+        QuillToolbarColorButton(
           controller: _quillController,
+          isBackground: true,
         ),
+        //const VerticalDivider(),
+        // GestureDetector(
+        //   onTapDown: (_) => _hideKeyboard,
+        //   child: QuillToolbarFontSizeButton(
+        //     controller: _quillController,
+        //     options: const QuillToolbarFontSizeButtonOptions(
+        //       rawItemsMap: {'小字号': '8', '大字号': '30', '超大字号': '40', '清除': '0'},
+        //     ),
+        //   ),
+        // ),
       ];
 }
