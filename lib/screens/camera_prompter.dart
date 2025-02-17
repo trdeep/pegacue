@@ -1,9 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../utils/tools.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 
 class CameraPrompterPage extends StatefulWidget {
   final String title;
@@ -20,35 +19,92 @@ class CameraPrompterPage extends StatefulWidget {
 }
 
 class _CameraPrompterPageState extends State<CameraPrompterPage> {
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
-    _openCameraApp();
+    _pickVideo();
   }
 
-  Future<void> _openCameraApp() async {
-    // 尝试使用不同的意图 URL
-    const url = 'intent://media/#Intent;action=android.media.action.STILL_IMAGE_CAMERA;end';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      // 如果上面的 URL 不起作用，尝试另一个 URL
-      const fallbackUrl = 'intent://com.android.camera/#Intent;scheme=content;end';
-      if (await canLaunch(fallbackUrl)) {
-        await launch(fallbackUrl);
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? video = await _picker.pickVideo(source: ImageSource.camera);
+      if (video != null) {
+        // 自动保存视频到相册
+        await _saveVideoToGallery(video.path);
       } else {
-        throw 'Could not launch camera app';
+        // 用户取消录制
+        Navigator.pop(context); // 返回上级页面
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('用户取消了录制视频')),
+        );
       }
+    } catch (e) {
+      Navigator.pop(context); // 返回上级页面
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('录制视频时发生错误')),
+      );
     }
+  }
+
+  Future<void> _saveVideoToGallery(String videoPath) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = 'pega_$timestamp.mp4';
+    final newPath = '${directory.path}/$fileName';
+
+    // 复制视频文件到应用目录
+    final File videoFile = File(videoPath);
+    await videoFile.copy(newPath);
+
+    // 保存视频到相册
+    final result = await SaverGallery.saveFile(
+      filePath: newPath,
+      fileName: fileName,
+      androidRelativePath: "Movies",
+      skipIfExists: true,
+    );
+
+    // 清理缓存的视频
+    await _cleanupVideoFile(videoPath);
+
+    if (result.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('视频已成功保存到相册')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('视频保存到相册失败')),
+      );
+    }
+
+    Navigator.pop(context); // 返回上级页面
+  }
+
+  Future<void> _cleanupVideoFile(String videoPath) async {
+    try {
+      final File videoFile = File(videoPath);
+      if (await videoFile.exists()) {
+        await videoFile.delete();
+      }
+    } catch (e) {
+      print('Error cleaning up video file: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Open Camera'),
+      appBar: AppBar(title: Text(widget.title)),
+      body: const Column(
+        children: [],
       ),
-      body: Center(),
     );
   }
 }
