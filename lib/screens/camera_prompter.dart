@@ -4,14 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 
+import '../widgets/floating_prompter.dart';
+
 class CameraPrompterPage extends StatefulWidget {
   final String title;
-  final String deltaJson;
+  final String content;
 
   const CameraPrompterPage({
     super.key,
     required this.title,
-    required this.deltaJson,
+    required this.content,
   });
 
   @override
@@ -20,12 +22,34 @@ class CameraPrompterPage extends StatefulWidget {
 
 class _CameraPrompterPageState extends State<CameraPrompterPage> {
   final ImagePicker _picker = ImagePicker();
+  bool _isPrompterVisible = false;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
     super.initState();
     _pickVideo();
+    _startTeleprompter(); // 在启动相机的同时显示提词器
   }
+
+  Future<void> _startTeleprompter() async {
+    // 创建悬浮提词器
+    _overlayEntry = OverlayEntry(
+      builder: (context) => FloatingPrompterWidget(
+        title: widget.title,
+        content: widget.content,
+      ),
+    );
+
+    // 显示悬浮提词器
+    if (_overlayEntry != null) {
+      Overlay.of(context).insert(_overlayEntry!);
+      setState(() {
+        _isPrompterVisible = true;
+      });
+    }
+  }
+
 
   Future<void> _pickVideo() async {
     try {
@@ -92,16 +116,38 @@ class _CameraPrompterPageState extends State<CameraPrompterPage> {
       print('Error cleaning up video file: $e');
     }
   }
-
+  
   @override
   void dispose() {
+    // 移除悬浮提词器
+    _overlayEntry?.remove();
+    _overlayEntry = null;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          // 添加切换提词器显示的按钮
+          IconButton(
+            icon: Icon(_isPrompterVisible ? Icons.visibility_off : Icons.visibility),
+            onPressed: () {
+              setState(() {
+                if (_isPrompterVisible) {
+                  _overlayEntry?.remove();
+                  _overlayEntry = null;
+                } else {
+                  _startTeleprompter();
+                }
+                _isPrompterVisible = !_isPrompterVisible;
+              });
+            },
+          ),
+        ],
+      ),
       body: const Column(
         children: [],
       ),

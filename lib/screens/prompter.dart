@@ -5,9 +5,11 @@ import 'package:pegacue/screens/teleprompter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/cue.dart';
+import '../utils/tools.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
 import 'camera_prompter.dart';
+import 'camera_prompter2.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
@@ -317,14 +319,23 @@ class _PrompterState extends State<Prompter> {
                   ),
                 );
               } else if (title == '悬浮提词') {
-                // TODO: 实现悬浮提词功能
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraPrompterPage2(
+                      title: cue.title,
+                      content: cue.deltaJson,
+                    ),
+                  ),
+                );
+
               } else if (title == '拍摄提词') {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => CameraPrompterPage(
                       title: cue.title,
-                      deltaJson: cue.deltaJson,
+                      content: cue.deltaJson,
                     ),
                   ),
                 );
