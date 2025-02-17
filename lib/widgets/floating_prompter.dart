@@ -158,7 +158,7 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> with Si
                     ),
                     child: SingleChildScrollView(
                       controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Html(

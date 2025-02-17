@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:webview_flutter_plus/webview_flutter_plus.dart';
+import 'package:flutter_html/flutter_html.dart';
 import '../utils/tools.dart';
 
 class TeleprompterPage extends StatefulWidget {
@@ -17,114 +17,58 @@ class TeleprompterPage extends StatefulWidget {
   State<TeleprompterPage> createState() => _TeleprompterPageState();
 }
 
-class _TeleprompterPageState extends State<TeleprompterPage> {
-  late WebViewControllerPlus _controller;
+class _TeleprompterPageState extends State<TeleprompterPage> with SingleTickerProviderStateMixin {
+  late ScrollController _scrollController;
+  late AnimationController _scrollAnimationController;
   bool _isScrolling = false;
-  bool _isLoading = true;
-  late final String _htmlContent;
 
   // 速度控制变量
-  double _scrollSpeed = 1.5;
-  static const double _minSpeed = 0.5;
+  double _scrollSpeed = 0.2;
+  static const double _minSpeed = 0.1;
   static const double _maxSpeed = 10.0;
-  static const double _speedStep = 0.25;
+  static const double _speedStep = 0.05;
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    _initializeWebView();
+    _initScrolling();
   }
 
-  Future<void> _initializeWebView() async {
-    _htmlContent = '''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body {
-            margin: 0;
-            padding: 16px;
-            background-color: black;
-            color: white;
-            font-size: 40px;
-            line-height: 1.5;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-          ::-webkit-scrollbar {
-            display: none;
-          }
-        </style>
-        <script>
-          var scrollInterval;
-          var scrollSpeed = 1.0;
-          
-          function startScroll() {
-            scrollInterval = setInterval(() => {
-              window.scrollBy(0, scrollSpeed);
-            }, 50);
-          }
-          
-          function stopScroll() {
-            clearInterval(scrollInterval);
-          }
-          
-          function setScrollSpeed(speed) {
-            scrollSpeed = speed;
-            if (scrollInterval) {
-              stopScroll();
-              startScroll();
-            }
-          }
-
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-              document.body.style.opacity = '1';
-              PageLoaded.postMessage('loaded');
-            }, 100);
-          });
-        </script>
-      </head>
-      <body>
-        ${deltaJsonToHtml(widget.deltaJson)}
-      </body>
-    </html>
-    ''';
-
-    _controller = WebViewControllerPlus()
-      ..setBackgroundColor(Colors.black)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
-    
-    // 添加 JavaScript Channel
-    _controller.addJavaScriptChannel(
-      'PageLoaded',
-      onMessageReceived: (JavaScriptMessage message) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      },
+  void _initScrolling() {
+    _scrollController = ScrollController();
+    _scrollAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 50),
     );
-    
-    await _controller.loadHtmlString(_htmlContent);
+
+    _scrollAnimationController.addListener(() {
+      if (_scrollController.hasClients && _isScrolling) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+
+        if (currentScroll >= maxScroll) {
+          _scrollController.jumpTo(0);
+        } else {
+          _scrollController.jumpTo(currentScroll + _scrollSpeed);
+        }
+      }
+    });
   }
 
-  void _toggleScroll() async {
+  void _toggleScroll() {
     setState(() {
       _isScrolling = !_isScrolling;
     });
 
     if (_isScrolling) {
-      await _controller.runJavaScript('startScroll()');
+      _scrollAnimationController.repeat();
     } else {
-      await _controller.runJavaScript('stopScroll()');
+      _scrollAnimationController.stop();
     }
   }
 
-  void _adjustSpeed(bool increase) async {
+  void _adjustSpeed(bool increase) {
     setState(() {
       if (increase) {
         _scrollSpeed = (_scrollSpeed + _speedStep).clamp(_minSpeed, _maxSpeed);
@@ -132,8 +76,6 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
         _scrollSpeed = (_scrollSpeed - _speedStep).clamp(_minSpeed, _maxSpeed);
       }
     });
-
-    await _controller.runJavaScript('setScrollSpeed(${_scrollSpeed})');
   }
 
   @override
@@ -142,27 +84,30 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // WebView
-          Visibility(
-            visible: !_isLoading,
-            maintainState: true,
-            child: WebViewWidget(controller: _controller),
-          ),
-          
-          // 加载指示器
-          if (_isLoading)
-            Container(
-              color: Colors.black,
-              child: const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.orange,
-                ),
+          // 内容区域
+          SingleChildScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Html(
+                data: deltaJsonToHtmlFull(widget.deltaJson),
+                style: {
+                  "body": Style(
+                    margin: Margins.zero,
+                    padding: HtmlPaddings.zero,
+                    fontSize: FontSize(40),
+                    lineHeight: LineHeight.number(1.5),
+                    color: Colors.white,
+                    textDecoration: TextDecoration.none,
+                  )
+                },
               ),
             ),
+          ),
           
           // 控制按钮
-          if (!_isLoading)
-            Positioned(
+          Positioned(
               left: 0,
               right: 0,
               bottom: 25,
@@ -202,6 +147,8 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
 
   @override
   void dispose() {
+    _scrollAnimationController.dispose();
+    _scrollController.dispose();
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
