@@ -1,9 +1,15 @@
+import 'package:delta_to_html/delta_to_html.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'dart:convert' as convert;
 
 ///
 /// 工具类
 ///
+String deltaJsonToHtmlFull(String json) {
+  List delta = convert.jsonDecode(json);
+  return DeltaToHTML.encodeJson(delta);
+}
+
 String deltaJsonToHtml(String json) {
   final delta = Delta.fromJson(convert.jsonDecode(json));
   return deltaToHtml(delta);

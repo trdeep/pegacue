@@ -1,9 +1,7 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:webview_flutter_plus/webview_flutter_plus.dart';
-
+import 'package:flutter_html/flutter_html.dart';
 import '../utils/tools.dart';
 
 class FloatingPrompterWidget extends StatefulWidget {
@@ -20,153 +18,76 @@ class FloatingPrompterWidget extends StatefulWidget {
   State<FloatingPrompterWidget> createState() => _FloatingPrompterWidgetState();
 }
 
-class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
-  late WebViewControllerPlus _controller;
+class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> with SingleTickerProviderStateMixin {
   Offset position = const Offset(20, 100);
   Size size = const Size(300, 500);
   bool isDragging = false;
   bool isResizing = false;
-  bool isWebViewReady = false;
-  late final String _htmlContent;
-  double _scrollSpeed = 1.5;
-  static const double _minSpeed = 0.5;
-  static const double _maxSpeed = 10.0;
-  static const double _speedStep = 0.25;
-  bool _isPlaying = true;
 
-  void _togglePlay() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
-    _controller.runJavaScript(_isPlaying ? 'startScroll()' : 'stopScroll()');
-    log('_isPlaying：$_isPlaying');
-  }
+  // 滚动控制
+  late ScrollController _scrollController;
+  late AnimationController _scrollAnimationController;
+  double _scrollSpeed = 0.2;
+  static const double _minSpeed = 0.1;
+  static const double _maxSpeed = 10.0;
+  static const double _speedStep = 0.05;
+  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    _initializeWebView();
+    _initScrolling();
   }
 
-  Future<void> _initializeWebView() async {
-    _htmlContent = '''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            overflow-y: scroll;
-          }
-          .content {
-            padding: 16px;
-            color: white;
-            font-size: 24px;
-            line-height: 1.8;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-          ::-webkit-scrollbar {
-            width: 0px;
-          }
-        </style>
-        <script>
-          let scrollInterval;
-          let scrollSpeed = ${_scrollSpeed};
-          let isScrolling = false;
-
-          function startScroll() {
-            if (!isScrolling) {
-              isScrolling = true;
-              scrollInterval = setInterval(() => {
-                window.scrollBy(0, scrollSpeed);
-                if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight) {
-                  window.scrollTo(0, 0);
-                }
-              }, 50);
-            }
-          }
-
-          function stopScroll() {
-            if (isScrolling) {
-              isScrolling = false;
-              clearInterval(scrollInterval);
-              scrollInterval = null;
-            }
-          }
-
-          function setScrollSpeed(speed) {
-            scrollSpeed = speed;
-            if (isScrolling && scrollInterval) {
-              stopScroll();
-              startScroll();
-            }
-          }
-
-          function init() {
-            document.querySelector('.content').style.opacity = '1';
-            PageLoaded.postMessage('loaded');
-            startScroll();
-          }
-
-          document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(init, 100);
-          });
-
-          document.addEventListener('wheel', () => {
-            stopScroll();
-            setTimeout(startScroll, 2000);
-          });
-
-          document.addEventListener('touchstart', () => {
-            stopScroll();
-          });
-
-          document.addEventListener('touchend', () => {
-            setTimeout(startScroll, 2000);
-          });
-        </script>
-      </head>
-      <body>
-        <div class="content">
-          ${deltaJsonToHtml(widget.content)}
-        </div>
-      </body>
-    </html>
-    ''';
-
-    _controller = WebViewControllerPlus()
-      ..setBackgroundColor(Colors.transparent)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
-
-    _controller.addJavaScriptChannel(
-      'PageLoaded',
-      onMessageReceived: (JavaScriptMessage message) {
-        setState(() {
-          isWebViewReady = true;
-        });
-      },
+  void _initScrolling() {
+    _scrollController = ScrollController();
+    _scrollAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 50),
     );
 
-    await _controller.loadHtmlString(_htmlContent);
+    _scrollAnimationController.addListener(() {
+      if (_scrollController.hasClients && _isPlaying) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+
+        if (currentScroll >= maxScroll) {
+          _scrollController.jumpTo(0);
+        } else {
+          _scrollController.jumpTo(currentScroll + _scrollSpeed);
+        }
+      }
+    });
+
+    if (_isPlaying) {
+      _scrollAnimationController.repeat();
+    }
+  }
+
+  void _togglePlay() {
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+
+    if (_isPlaying) {
+      _scrollAnimationController.repeat();
+    } else {
+      _scrollAnimationController.stop();
+    }
+    log('_isPlaying：$_isPlaying');
   }
 
   void _updateScrollSpeed(double newSpeed) {
     setState(() {
       _scrollSpeed = newSpeed.clamp(_minSpeed, _maxSpeed);
     });
-    _controller.runJavaScript('setScrollSpeed($_scrollSpeed)');
   }
 
   @override
   void dispose() {
-    _controller.runJavaScript('stopScroll()');
+    _scrollAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -205,7 +126,6 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
                     padding: EdgeInsets.only(left: 16),
                     child: Text(''),
                   ),
-                  // 关闭按钮
                   IconButton(
                     icon: Icon(Icons.close, color: Colors.white.withOpacity(0.6)),
                     onPressed: () {
@@ -229,20 +149,33 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
             ),
             child: Stack(
               children: [
-                // WebView 容器
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                  ),
-                  child: SizedBox(
-                    width: size.width,
-                    height: size.height - 40,
-                    child: isWebViewReady
-                        ? WebViewWidget(controller: _controller)
-                        : const Center(
-                            child: CircularProgressIndicator(color: Colors.white),
-                          ),
+                // 内容显示区域
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Html(
+                          data: deltaJsonToHtmlFull(widget.content),
+                          style: {
+                            "body": Style(
+                              margin: Margins.zero,
+                              padding: HtmlPaddings.zero,
+                              fontSize: FontSize(30),
+                              lineHeight: LineHeight.number(1.4),
+                              color: Colors.white,
+                              textDecoration: TextDecoration.none,
+                            )
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 
@@ -290,7 +223,7 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
                 // 大小调节手柄
                 Positioned(
                   right: 0,
-                  bottom: 50, // 调整位置以避免与底部控制栏重叠
+                  bottom: 50,
                   child: GestureDetector(
                     onPanStart: (details) => setState(() => isResizing = true),
                     onPanUpdate: (details) {

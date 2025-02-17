@@ -77,10 +77,10 @@ packages:
     dependency: transitive
     description:
       name: csslib
-      sha256: "09bad715f418841f976c77db72d5398dc1253c21fb9c0c7f0b0b985860b2d58e"
+      sha256: "831883fb353c8bdc1d71979e5b342c7d88acfbc643113c14ae51e2442ea0f20f"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.0.2"
+    version: "0.17.3"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -97,6 +97,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "10.8.3"
+  delta_to_html:
+    dependency: "direct main"
+    description:
+      name: delta_to_html
+      sha256: f366e50e5764a98f6be89da4881b159288ba60c2b8e1a77bd29282879ebc6145
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.2"
   diff_match_patch:
     dependency: transitive
     description:
@@ -190,6 +198,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.0"
+  flutter_html:
+    dependency: "direct main"
+    description:
+      name: flutter_html
+      sha256: "02ad69e813ecfc0728a455e4bf892b9379983e050722b1dce00192ee2e41d1ee"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.0-beta.2"
   flutter_keyboard_visibility_linux:
     dependency: transitive
     description:
@@ -286,13 +302,13 @@ packages:
     source: sdk
     version: "0.0.0"
   html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html
-      sha256: "1fc58edeaec4307368c60d59b7e15b9d658b57d7f3125098b6294153c75337ec"
+      sha256: "3a7812d5bcd2894edf53dfaf8cd640876cf6cef50a8f238745c8b8120ea74d3a"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.15.5"
+    version: "0.15.4"
   http:
     dependency: transitive
     description:
@@ -413,6 +429,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.0.0"
+  list_counter:
+    dependency: transitive
+    description:
+      name: list_counter
+      sha256: c447ae3dfcd1c55f0152867090e67e219d42fe6d4f2807db4bbe8b8d69912237
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.2"
   markdown:
     dependency: transitive
     description:
@@ -509,6 +533,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.0"
+  petitparser:
+    dependency: transitive
+    description:
+      name: petitparser
+      sha256: c15605cd28af66339f8eb6fbe0e541bfe2d1b72d5825efc6598f3e0a31b9ad27
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "6.0.2"
   platform:
     dependency: transitive
     description:
@@ -661,6 +693,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.4.1"
+  simple_html_css:
+    dependency: "direct main"
+    description:
+      name: simple_html_css
+      sha256: "93bc59c0565e943abf6674e932f3f8b77bf87290a4f6f3f364c05fad26feb9d7"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.0.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -930,6 +970,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.0"
+  xml:
+    dependency: transitive
+    description:
+      name: xml
+      sha256: b015a8ad1c488f66851d762d3090a21c600e479dc75e68328c52774040cf9226
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "6.5.0"
 sdks:
   dart: ">=3.6.0 <4.0.0"
   flutter: ">=3.27.0"

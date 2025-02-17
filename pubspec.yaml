@@ -55,6 +55,10 @@ dependencies:
   #gallery_saver_plus: ^3.0.1
   saver_gallery: ^4.0.1
   flutter_overlay_window: ^0.4.5
+  flutter_html: ^3.0.0-beta.2
+  simple_html_css: ^5.0.0
+  html: ^0.15.4
+  delta_to_html: ^0.2.2
   #chewie: ^1.10.0
 
 dev_dependencies:
