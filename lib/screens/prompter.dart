@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pegacue/screens/teleprompter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/cue.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
+import 'camera_prompter.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
@@ -267,7 +272,8 @@ class _PrompterState extends State<Prompter> {
                           return CueCard(
                             id: cue.id!,
                             title: cue.title,
-                            date: cue.createdAt.toString().substring(0, cue.createdAt.toString().lastIndexOf('.')),
+                            date: cue.createdAt.toString().substring(
+                                0, cue.createdAt.toString().lastIndexOf('.')),
                             plainText: cue.plainText,
                             deltaJson: cue.deltaJson,
                             wordCount: cue.wordCount,
@@ -291,55 +297,63 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-  Widget _buildFeatureItem(String title, String subtitle, IconData icon, Color color) {
-  return GestureDetector(
-    onTap: () {
-      showDialog(
-        context: context,
-        builder: (context) => CueSelectorDialog(
-          title: '选择台词',
-          onCueSelected: (cue) {
-            if (title == '提词板') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TeleprompterPage(
-                    title: cue.title,
-                    deltaJson: cue.deltaJson,
+  Widget _buildFeatureItem(
+      String title, String subtitle, IconData icon, Color color) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => CueSelectorDialog(
+            title: '选择台词',
+            onCueSelected: (cue) async {
+              if (title == '提词板') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TeleprompterPage(
+                      title: cue.title,
+                      deltaJson: cue.deltaJson,
+                    ),
                   ),
-                ),
-              );
-            } else if (title == '悬浮提词') {
-              // TODO: 实现悬浮提词功能
-            } else if (title == '拍摄提词') {
-              // TODO: 实现拍摄提词功能 
-            }
-          },
+                );
+              } else if (title == '悬浮提词') {
+                // TODO: 实现悬浮提词功能
+              } else if (title == '拍摄提词') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraPrompterPage(
+                      title: cue.title,
+                      deltaJson: cue.deltaJson,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(title, style: const TextStyle(fontSize: 14)),
+            if (subtitle.isNotEmpty)
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+          ],
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontSize: 14)),
-          if (subtitle.isNotEmpty)
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
+    );
+  }
 }
 
 class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {

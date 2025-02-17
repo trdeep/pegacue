@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter_plus/webview_flutter_plus.dart';
 import '../utils/tools.dart';
 
-///
-/// 提词板
-///
 class TeleprompterPage extends StatefulWidget {
   final String title;
   final String deltaJson;
@@ -23,8 +20,14 @@ class TeleprompterPage extends StatefulWidget {
 class _TeleprompterPageState extends State<TeleprompterPage> {
   late WebViewControllerPlus _controller;
   bool _isScrolling = false;
-  bool _isLoading = true;  // 添加加载状态
+  bool _isLoading = true;
   late final String _htmlContent;
+
+  // 速度控制变量
+  double _scrollSpeed = 1.5;
+  static const double _minSpeed = 0.5;
+  static const double _maxSpeed = 10.0;
+  static const double _speedStep = 0.25;
 
   @override
   void initState() {
@@ -42,13 +45,13 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
         <style>
           body {
             margin: 0;
-            padding: 0;
+            padding: 16px;
             background-color: black;
             color: white;
-            font-size: 50px;
-            line-height: 1.2;
-            overflow-x: hidden;
-            padding-bottom: 60px;
+            font-size: 40px;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
           }
           ::-webkit-scrollbar {
             display: none;
@@ -56,43 +59,56 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
         </style>
         <script>
           var scrollInterval;
+          var scrollSpeed = 1.0;
+          
           function startScroll() {
             scrollInterval = setInterval(() => {
-              window.scrollBy(0, 1);
+              window.scrollBy(0, scrollSpeed);
             }, 50);
           }
+          
           function stopScroll() {
             clearInterval(scrollInterval);
           }
-          // 修改为使用 JavaScript Channel
-          window.onload = function() {
-            PageLoaded.postMessage('loaded');
+          
+          function setScrollSpeed(speed) {
+            scrollSpeed = speed;
+            if (scrollInterval) {
+              stopScroll();
+              startScroll();
+            }
           }
+
+          document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+              document.body.style.opacity = '1';
+              PageLoaded.postMessage('loaded');
+            }, 100);
+          });
         </script>
       </head>
-      <body style="visibility: hidden">
+      <body>
         ${deltaJsonToHtml(widget.deltaJson)}
       </body>
     </html>
-  ''';
+    ''';
 
     _controller = WebViewControllerPlus()
       ..setBackgroundColor(Colors.black)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..addJavaScriptChannel(
-        'PageLoaded',
-        onMessageReceived: (JavaScriptMessage message) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            _controller.runJavaScript(
-                "document.body.style.visibility = 'visible';"
-            );
-          }
-        },
-      );
-
+      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+    
+    // 添加 JavaScript Channel
+    _controller.addJavaScriptChannel(
+      'PageLoaded',
+      onMessageReceived: (JavaScriptMessage message) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      },
+    );
+    
     await _controller.loadHtmlString(_htmlContent);
   }
 
@@ -108,14 +124,30 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
     }
   }
 
+  void _adjustSpeed(bool increase) async {
+    setState(() {
+      if (increase) {
+        _scrollSpeed = (_scrollSpeed + _speedStep).clamp(_minSpeed, _maxSpeed);
+      } else {
+        _scrollSpeed = (_scrollSpeed - _speedStep).clamp(_minSpeed, _maxSpeed);
+      }
+    });
+
+    await _controller.runJavaScript('setScrollSpeed(${_scrollSpeed})');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // 设置背景色为黑色
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           // WebView
-          WebViewWidget(controller: _controller),
+          Visibility(
+            visible: !_isLoading,
+            maintainState: true,
+            child: WebViewWidget(controller: _controller),
+          ),
           
           // 加载指示器
           if (_isLoading)
@@ -127,22 +159,40 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
                 ),
               ),
             ),
-
+          
           // 控制按钮
           if (!_isLoading)
             Positioned(
               left: 0,
               right: 0,
-              bottom: 20,
-              child: Center(
-                child: FloatingActionButton(
-                  onPressed: _toggleScroll,
-                  backgroundColor: Colors.orange.withOpacity(0.7),
-                  child: Icon(
-                    _isScrolling ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
+              bottom: 25,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 减速按钮
+                  FloatingActionButton.small(
+                    onPressed: () => _adjustSpeed(false),
+                    backgroundColor: Colors.orange.withOpacity(0.7),
+                    child: const Icon(Icons.keyboard_double_arrow_left, color: Colors.white),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  // 播放/暂停按钮
+                  FloatingActionButton(
+                    onPressed: _toggleScroll,
+                    backgroundColor: Colors.orange.withOpacity(0.7),
+                    child: Icon(
+                      _isScrolling ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // 加速按钮
+                  FloatingActionButton.small(
+                    onPressed: () => _adjustSpeed(true),
+                    backgroundColor: Colors.orange.withOpacity(0.7),
+                    child: const Icon(Icons.keyboard_double_arrow_right, color: Colors.white),
+                  ),
+                ],
               ),
             ),
         ],
@@ -152,7 +202,6 @@ class _TeleprompterPageState extends State<TeleprompterPage> {
 
   @override
   void dispose() {
-    // 恢复状态栏
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,

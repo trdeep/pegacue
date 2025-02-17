@@ -46,6 +46,12 @@ dependencies:
   vsc_quill_delta_to_html: ^1.0.5
 #  webview_flutter: ^4.10.0
   webview_flutter_plus: ^0.4.10
+  camera: ^0.11.1
+  url_launcher: ^6.3.1
+  shared_preferences: ^2.5.2
+  image_picker: ^1.1.2
+  path_provider: ^2.1.5
+  video_player: ^2.9.2
 #  html_editor_plus: ^0.0.5
 
 dev_dependencies:
