@@ -89,18 +89,21 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
                 if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight) {
                   window.scrollTo(0, 0);
                 }
-              }, 20);
+              }, 50);
             }
           }
 
           function stopScroll() {
-            isScrolling = false;
-            clearInterval(scrollInterval);
+            if (isScrolling) {
+              isScrolling = false;
+              clearInterval(scrollInterval);
+              scrollInterval = null;
+            }
           }
 
           function setScrollSpeed(speed) {
             scrollSpeed = speed;
-            if (isScrolling) {
+            if (isScrolling && scrollInterval) {
               stopScroll();
               startScroll();
             }
