@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter_plus/webview_flutter_plus.dart';
@@ -30,6 +32,15 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
   static const double _minSpeed = 0.5;
   static const double _maxSpeed = 10.0;
   static const double _speedStep = 0.25;
+  bool _isPlaying = true;
+
+  void _togglePlay() {
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+    _controller.runJavaScript(_isPlaying ? 'startScroll()' : 'stopScroll()');
+    log('_isPlaying：$_isPlaying');
+  }
 
   @override
   void initState() {
@@ -51,8 +62,7 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
             width: 100%;
             height: 100%;
             background-color: transparent;
-            overflow-y: auto; /* 允许垂直滚动 */
-            -webkit-overflow-scrolling: touch; /* iOS 流畅滚动 */
+            overflow-y: scroll;
           }
           .content {
             padding: 16px;
@@ -61,39 +71,33 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
             line-height: 1.8;
             opacity: 0;
             transition: opacity 0.3s ease;
-            min-height: 200%; /* 确保内容足够长以支持滚动 */
           }
           ::-webkit-scrollbar {
-            width: 0px; /* 隐藏滚动条但保持功能 */
+            width: 0px;
           }
         </style>
         <script>
-          var scrollInterval;
-          var scrollSpeed = ${_scrollSpeed};
-          var isScrolling = false;
-          
+          let scrollInterval;
+          let scrollSpeed = ${_scrollSpeed};
+          let isScrolling = false;
+
           function startScroll() {
             if (!isScrolling) {
               isScrolling = true;
               scrollInterval = setInterval(() => {
-                window.scrollBy({
-                  top: scrollSpeed,
-                  behavior: 'smooth'
-                });
-                
-                // 检查是否到达底部，如果是则回到顶部
-                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                window.scrollBy(0, scrollSpeed);
+                if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight) {
                   window.scrollTo(0, 0);
                 }
-              }, 50);
+              }, 20);
             }
           }
-          
+
           function stopScroll() {
             isScrolling = false;
             clearInterval(scrollInterval);
           }
-          
+
           function setScrollSpeed(speed) {
             scrollSpeed = speed;
             if (isScrolling) {
@@ -102,21 +106,27 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
             }
           }
 
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-              document.querySelector('.content').style.opacity = '1';
-              startScroll();
-              PageLoaded.postMessage('loaded');
-            }, 300);
+          function init() {
+            document.querySelector('.content').style.opacity = '1';
+            PageLoaded.postMessage('loaded');
+            startScroll();
+          }
+
+          document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(init, 100);
           });
 
-          // 添加触摸事件处理
-          document.addEventListener('touchstart', function() {
+          document.addEventListener('wheel', () => {
+            stopScroll();
+            setTimeout(startScroll, 2000);
+          });
+
+          document.addEventListener('touchstart', () => {
             stopScroll();
           });
 
-          document.addEventListener('touchend', function() {
-            setTimeout(startScroll, 1000);
+          document.addEventListener('touchend', () => {
+            setTimeout(startScroll, 2000);
           });
         </script>
       </head>
@@ -180,7 +190,7 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
               height: 40,
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(8),
                   topRight: Radius.circular(8),
                 ),
@@ -188,24 +198,16 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Text(
-                      widget.title,
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 16),
+                    child: Text(''),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove, color: Colors.white),
-                        onPressed: () => _updateScrollSpeed(_scrollSpeed - _speedStep),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add, color: Colors.white),
-                        onPressed: () => _updateScrollSpeed(_scrollSpeed + _speedStep),
-                      ),
-                    ],
+                  // 关闭按钮
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white.withOpacity(0.6)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
                 ],
               ),
@@ -214,7 +216,7 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
           // 内容区域
           Container(
             width: size.width,
-            height: size.height - 40, // 减去顶部高度
+            height: size.height - 40,
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.7),
               borderRadius: const BorderRadius.only(
@@ -241,37 +243,76 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> {
                   ),
                 ),
 
+                // 底部控制栏
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_double_arrow_left,
+                              color: Colors.white),
+                          onPressed: () =>
+                              _updateScrollSpeed(_scrollSpeed - _speedStep),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                            color: Colors.white,
+                          ),
+                          onPressed: _togglePlay,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_double_arrow_right,
+                              color: Colors.white),
+                          onPressed: () =>
+                              _updateScrollSpeed(_scrollSpeed + _speedStep),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // 大小调节手柄
                 Positioned(
                   right: 0,
-                  bottom: 0,
+                  bottom: 50, // 调整位置以避免与底部控制栏重叠
                   child: GestureDetector(
                     onPanStart: (details) => setState(() => isResizing = true),
                     onPanUpdate: (details) {
                       if (isResizing) {
                         setState(() {
-                          size = Size(
-                            (size.width + details.delta.dx)
-                                .clamp(200.0, MediaQuery.of(context).size.width - 40),
-                            (size.height + details.delta.dy + 40) // 加上顶部高度
-                                .clamp(190.0, MediaQuery.of(context).size.height - 100),
-                          );
+                          final newWidth = (size.width + details.delta.dx)
+                              .clamp(200.0, MediaQuery.of(context).size.width - 40);
+                          final newHeight = (size.height + details.delta.dy)
+                              .clamp(200.0, MediaQuery.of(context).size.height - 100);
+                          size = Size(newWidth, newHeight);
                         });
                       }
                     },
                     onPanEnd: (details) => setState(() => isResizing = false),
                     child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
-                        borderRadius: const BorderRadius.only(
+                      width: 24,
+                      height: 24,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(4),
                           bottomRight: Radius.circular(8),
                         ),
                       ),
-                      child: const Icon(Icons.zoom_out_map,
-                          size: 16, color: Colors.white),
+                      child: Icon(Icons.zoom_out_map,
+                          size: 18, color: Colors.white.withOpacity(0.6)),
                     ),
                   ),
                 ),
