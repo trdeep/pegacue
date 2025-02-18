@@ -32,6 +32,12 @@ class _TeleprompterPageState extends State<TeleprompterPage> with SingleTickerPr
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _initScrolling();
   }
 
@@ -89,7 +95,7 @@ class _TeleprompterPageState extends State<TeleprompterPage> with SingleTickerPr
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 100.0),
               child: Html(
                 data: deltaJsonToHtmlFull(widget.deltaJson),
                 style: {
@@ -153,6 +159,10 @@ class _TeleprompterPageState extends State<TeleprompterPage> with SingleTickerPr
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
     );
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 }
