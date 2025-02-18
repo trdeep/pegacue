@@ -7,11 +7,13 @@ import '../utils/tools.dart';
 class FloatingPrompterWidget extends StatefulWidget {
   final String title;
   final String content;
+  final OverlayEntry overlayEntry;
 
   const FloatingPrompterWidget({
     super.key,
     required this.title,
     required this.content,
+    required this.overlayEntry,
   });
 
   @override
@@ -129,7 +131,8 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> with Si
                   IconButton(
                     icon: Icon(Icons.close, color: Colors.white.withOpacity(0.6)),
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      //Navigator.of(context).pop();
+                      widget.overlayEntry.remove();
                     },
                   ),
                 ],
@@ -170,6 +173,9 @@ class _FloatingPrompterWidgetState extends State<FloatingPrompterWidget> with Si
                               fontSize: FontSize(30),
                               lineHeight: LineHeight.number(1.4),
                               color: Colors.white,
+                              textDecoration: TextDecoration.none,
+                            ),
+                            "*": Style(
                               textDecoration: TextDecoration.none,
                             )
                           },

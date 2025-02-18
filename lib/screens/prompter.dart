@@ -1,16 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pegacue/screens/teleprompter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/cue.dart';
-import '../utils/tools.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
+import '../widgets/floating_prompter.dart';
 import 'camera_prompter.dart';
-import 'camera_prompter2.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
@@ -26,6 +21,7 @@ class Prompter extends StatefulWidget {
 
 class _PrompterState extends State<Prompter> {
   late Future<List<Cue>> _cuesFuture;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -45,6 +41,8 @@ class _PrompterState extends State<Prompter> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _overlayEntry?.remove();
+    _overlayEntry = null;
     super.dispose();
   }
 
@@ -315,6 +313,19 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
+  Future<void> _startTeleprompter(title, content) async {
+    // 创建悬浮提词器
+    _overlayEntry = OverlayEntry(
+      builder: (context) => FloatingPrompterWidget(
+          title: title, content: content, overlayEntry: _overlayEntry!),
+    );
+
+    // 显示悬浮提词器
+    if (_overlayEntry != null) {
+      Overlay.of(context).insert(_overlayEntry!);
+    }
+  }
+
   Widget _buildFeatureItem(
       String title, String subtitle, IconData icon, Color color) {
     return GestureDetector(
@@ -335,24 +346,16 @@ class _PrompterState extends State<Prompter> {
                   ),
                 );
               } else if (title == '悬浮提词') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraPrompterPage2(
-                      title: cue.title,
-                      content: cue.deltaJson,
-                    ),
-                  ),
-                );
-
+                _startTeleprompter(cue.title, cue.deltaJson);
               } else if (title == '拍摄提词') {
+                // 打开悬浮提词
+                _startTeleprompter(cue.title, cue.deltaJson);
+
+                // 跳转摄像机
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CameraPrompterPage(
-                      title: cue.title,
-                      content: cue.deltaJson,
-                    ),
+                    builder: (context) => const CameraPrompterPage(),
                   ),
                 );
               }
