@@ -1,44 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:pegacue/models/cue.dart';
 import '../utils/database_helper.dart';
 import '../screens/edit_cue.dart';
 import '../screens/teleprompter.dart';
+
 ///
 /// 台词列表卡片
 ///
 class CueCard extends StatelessWidget {
-  final int id;
-  final String title;
-  final String date;
-  final String plainText;
-  final String deltaJson;
-  final int wordCount;
-  final String action;
+  final Cue cue;
   final VoidCallback onUpdate;
 
   const CueCard({
     super.key,
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.plainText,
-    required this.deltaJson,
-    required this.wordCount,
-    required this.action,
+    required this.cue,
     required this.onUpdate,
   });
 
   @override
   Widget build(BuildContext context) {
+    String date = cue.createdAt
+        .toString()
+        .substring(0, cue.createdAt.toString().lastIndexOf('.'));
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => EditCuePage(
-              id: id,
-              title: title,
+              id: cue.id,
+              title: cue.title,
               date: date,
-              deltaJson: deltaJson,
+              deltaJson: cue.deltaJson,
             ),
           ),
         ).then((_) {
@@ -67,7 +61,7 @@ class CueCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    title,
+                    cue.title,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -96,7 +90,7 @@ class CueCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                plainText,
+                cue.plainText,
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -111,16 +105,18 @@ class CueCard extends StatelessWidget {
                   Text(
                     date,
                     style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
+                      fontSize:
+                          MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
                       color: Colors.grey[400],
                     ),
                   ),
                   Row(
                     children: [
                       Text(
-                        '$wordCount字/预计录${_formatDuration((wordCount / 2).toInt())}',
+                        '${cue.wordCount}字/预计录${_formatDuration((cue.wordCount / 2).toInt())}',
                         style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
+                          fontSize: MediaQuery.of(context).size.width *
+                              0.028, // 动态计算字体大小
                           color: Colors.grey[400],
                         ),
                       ),
@@ -131,20 +127,21 @@ class CueCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => TeleprompterPage(
-                                title: title,
-                                deltaJson: deltaJson,
+                                title: cue.title,
+                                deltaJson: cue.deltaJson,
                               ),
                             ),
                           );
                         },
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.orange[50],
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          action,
+                          '去提词',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.orange[400],
@@ -163,7 +160,7 @@ class CueCard extends StatelessWidget {
   }
 
   void _deleteCue(BuildContext context) async {
-    await DatabaseHelper.instance.deleteCue(id);
+    await DatabaseHelper.instance.deleteCue(cue.id!);
     onUpdate();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('台词已删除')),

@@ -310,16 +310,8 @@ class _PrompterState extends State<Prompter> {
                       final cues = snapshot.data!;
                       return Column(
                         children: List.generate(cues.length, (index) {
-                          final cue = cues[index];
                           return CueCard(
-                            id: cue.id!,
-                            title: cue.title,
-                            date: cue.createdAt.toString().substring(
-                                0, cue.createdAt.toString().lastIndexOf('.')),
-                            plainText: cue.plainText,
-                            deltaJson: cue.deltaJson,
-                            wordCount: cue.wordCount,
-                            action: '去提词',
+                            cue: cues[index],
                             onUpdate: () {
                               setState(() {
                                 _cuesFuture = _fetchCues();

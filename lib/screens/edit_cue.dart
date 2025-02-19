@@ -165,7 +165,6 @@ class _EditCuePageState extends State<EditCuePage> {
           controller: _quillController,
           isBackground: true,
         ),
-        const VerticalDivider(),
         GestureDetector(
           onTapDown: (_) => _hideKeyboard,
           child: QuillToolbarFontSizeButton(

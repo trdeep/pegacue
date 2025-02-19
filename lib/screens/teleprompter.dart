@@ -124,6 +124,7 @@ class _TeleprompterPageState extends State<TeleprompterPage>
           SystemUiMode.manual,
           overlays: SystemUiOverlay.values,
         );
+        Navigator.pop(context);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const IndexPage()),
