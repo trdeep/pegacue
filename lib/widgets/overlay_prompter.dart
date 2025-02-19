@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,21 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
 
 class OverlayPrompter extends StatefulWidget {
-  final html = '''
-  <div>
-    <p>尊敬的数码发展及<strong>新闻</strong>部长兼内政部第二部长 杨莉明女士</p>
-    <h1 id="_1">各位会馆领导和代表</h1>
-    <p>各位理事、属校校长<br>
-    属校教职员以及福建会馆会员们<br>
-    各位嘉宾，大家中午好！</p>
-    <ol>
-      <li>首先，我谨代表新加坡福建会馆全体同仁，欢迎主宾 —— 数码发展及新闻部长兼内政部第二部长杨莉明女士，以及各位嘉宾，拨冗出席今天的新春团拜。在此祝愿大家在新的一年里，身心安康、吉祥如意、步步高升、阖家幸福。</li>
-      <li>今年新加坡欢庆建国60周年，而新加坡福建会馆，则是庆祝成立185周年！成立于1840年的福建会馆，多年来得力于各位乡贤以<em>及华社同仁的</em>通力合作、鼎力支持，使得会务日益精进，会馆也能够在推动教育、推广华族语言文化、以及推进社会公益这三方面，尽心尽力，支持社会国家的发展。再次衷心感谢所有为福建会馆出钱出力的理事、会员、教职员和义工们，“福建人、做阵行，也做阵赢！”，只要我们团结一致，一定能够克服万难、一起向前迈进！</li>
-      <li>福建会馆为庆祝成立185周<del>年，将于今年</del>举办一系列精彩的庆祝活动，包括5月18日在南洋理工大学进行的慈善行兼跑，除了10公里的义跑，也欢迎公众到来参加1.85公里的义走，届时也将有小朋友喜欢的迷你嘉年华，欢迎各位会员、各位会馆朋友们合家参与，同欢共庆。</li>
-    </ol>
-  </div>
-  ''';
-
   const OverlayPrompter({super.key});
 
   @override
@@ -37,6 +23,8 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   static const double _speedStep = 0.5;
 
   Timer? _scrollTimer;
+  String? _html = '<h1>没有加载台词</h1>';
+
   double _scrollSpeed = 1.0; // 每个周期滚动的像素数
   bool _isScrolling = false; // 默认关闭自动滚动
 
@@ -51,9 +39,13 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   // 滚动控制
   late AnimationController _scrollAnimationController;
 
+  // 新增 ReceivePort 用于接收 HTML 数据
+  final ReceivePort _htmlReceivePort = ReceivePort();
+
   @override
   void initState() {
     super.initState();
+    _initShowHtml();
     _scrollController = ScrollController();
     _scrollAnimationController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 50));
@@ -62,10 +54,30 @@ class _OverlayPrompterState extends State<OverlayPrompter>
 
   @override
   void dispose() {
+    // 注销注册的端口
+    IsolateNameServer.removePortNameMapping('HTML_DATA_PORT');
+    _htmlReceivePort.close();
     _stopScrolling();
     _scrollAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // 修改 _initShowHtml 使用 ReceivePort 接收数据
+  void _initShowHtml() {
+    // 确保不存在同名注册
+    IsolateNameServer.removePortNameMapping('HTML_DATA_PORT');
+    // 注册 ReceivePort 的发送端
+    IsolateNameServer.registerPortWithName(
+        _htmlReceivePort.sendPort, 'HTML_DATA_PORT');
+    // 监听接收数据
+    _htmlReceivePort.listen((dynamic data) {
+      if (data is String) {
+        setState(() {
+          _html = data;
+        });
+      }
+    });
   }
 
   Future<void> _closeOverlay() async {
@@ -88,7 +100,6 @@ class _OverlayPrompterState extends State<OverlayPrompter>
       }
     });
     setState(() {});
-
   }
 
   void _stopScrolling() {
@@ -127,177 +138,357 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: SizedBox(
-        width: _overlayWidth,
-        height: _overlayHeight,
-        child: Column(
-          children: [
-            // 顶部拖动区域
-            GestureDetector(
-              onPanStart: (details) => setState(() => isDragging = true),
-              onPanUpdate: (details) {
-                if (isDragging) {
-                  setState(() {
-                    position += details.delta;
-                  });
-                }
-              },
-              onPanEnd: (details) {
-                setState(() => isDragging = false);
-                _updateOverlay(); // 拖动结束时更新位置
-              },
-              child: Container(
-                width: _overlayWidth,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 16),
-                      child: Text(''),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close,
-                          color: Colors.white.withOpacity(0.6)),
-                      onPressed: _closeOverlay,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // 内容区域
-            Container(
+      child: Column(
+        children: [
+          // 顶部拖动区域
+          GestureDetector(
+            onPanStart: (details) => setState(() => isDragging = true),
+            onPanUpdate: (details) {
+              if (isDragging) {
+                setState(() {
+                  position += details.delta;
+                });
+              }
+            },
+            onPanEnd: (details) {
+              setState(() => isDragging = false);
+              _updateOverlay(); // 拖动结束时更新位置
+            },
+            child: Container(
               width: _overlayWidth,
-              height: _overlayHeight - 50,
+              height: 40,
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
                 ),
               ),
-              child: Stack(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 内容显示区域
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
-                      ),
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Html(
-                            data: widget.html,
-                            style: {
-                              "body": Style(
+                  const Padding(
+                    padding: EdgeInsets.only(left: 16),
+                    child: Text(''),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        color: Colors.white.withOpacity(0.6)),
+                    onPressed: _closeOverlay,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 内容区域
+          Container(
+            width: _overlayWidth,
+            height: _overlayHeight - 50,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8),
+              ),
+            ),
+            child: Stack(
+              children: [
+                // 内容显示区域
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Html(
+                          data: _html,
+                          style: {
+                            "body": Style(
                                 margin: Margins.zero,
                                 padding: HtmlPaddings.zero,
                                 fontSize: FontSize(30),
                                 lineHeight: LineHeight.number(1.4),
-                                color: Colors.white,
-                                textDecoration: TextDecoration.none,
-                              )
-                            },
-                          ),
+                                color: Colors.white),
+                            "u": Style(textDecorationColor: Colors.white)
+                          },
                         ),
                       ),
                     ),
                   ),
-                  // 底部控制栏
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                ),
+                // 底部控制栏
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.keyboard_arrow_left,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _scrollSpeed = (_scrollSpeed - _speedStep)
+                                  .clamp(_minSpeed, _maxSpeed);
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _isScrolling ? Icons.pause : Icons.play_arrow,
+                            color: Colors.white,
+                          ),
+                          onPressed: _toggleScrolling,
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.keyboard_arrow_right,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _scrollSpeed = (_scrollSpeed + _speedStep)
+                                  .clamp(_minSpeed, _maxSpeed);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // 右下角大小调节手柄
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      setState(() {
+                        _overlayWidth = (_overlayWidth + details.delta.dx)
+                            .clamp(200.0, 800.0);
+                        _overlayHeight = (_overlayHeight + details.delta.dy)
+                            .clamp(200.0, 800.0);
+
+                        _updateOverlay();
+                      });
+                    },
                     child: Container(
-                      height: 50,
+                      padding: const EdgeInsets.all(4),
+                      color: Colors.transparent,
+                      child: Icon(
+                        Icons.zoom_out_map,
+                        size: 18,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/*
+
+ Widget build0(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+          children: [
+            Positioned(
+              left: position.dx,
+              top: position.dy,
+              child: Column(
+                children: [
+                  // 顶部拖动区域
+                  GestureDetector(
+                    onPanStart: (details) => setState(() => isDragging = true),
+                    onPanUpdate: (details) {
+                      if (isDragging) {
+                        setState(() {
+                          position += details.delta;
+                        });
+                      }
+                    },
+                    onPanEnd: (details) {
+                      setState(() => isDragging = false);
+                      _updateOverlay(); // 拖动结束时更新位置
+                    },
+                    child: Container(
+                      width: _overlayWidth,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withOpacity(0.7),
                         borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(8),
-                          bottomRight: Radius.circular(8),
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.keyboard_arrow_left,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _scrollSpeed = (_scrollSpeed - _speedStep)
-                                    .clamp(_minSpeed, _maxSpeed);
-                              });
-                            },
+                          const Padding(
+                            padding: EdgeInsets.only(left: 16),
+                            child: Text(''),
                           ),
                           IconButton(
-                            icon: Icon(
-                              _isScrolling ? Icons.pause : Icons.play_arrow,
-                              color: Colors.white,
-                            ),
-                            onPressed: _toggleScrolling,
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.keyboard_arrow_right,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _scrollSpeed = (_scrollSpeed + _speedStep)
-                                    .clamp(_minSpeed, _maxSpeed);
-                              });
-                            },
+                            icon: Icon(Icons.close,
+                                color: Colors.white.withOpacity(0.6)),
+                            onPressed: _closeOverlay,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // 右下角大小调节手柄
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _overlayWidth = (_overlayWidth + details.delta.dx)
-                              .clamp(200.0, 800.0);
-                          _overlayHeight = (_overlayHeight + details.delta.dy)
-                              .clamp(200.0, 800.0);
-
-                          _updateOverlay();
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        color: Colors.transparent,
-                        child: Icon(
-                          Icons.zoom_out_map,
-                          size: 18,
-                          color: Colors.white.withOpacity(0.6),
-                        ),
+                  // 内容区域
+                  Container(
+                    width: _overlayWidth,
+                    height: _overlayHeight - 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
                       ),
+                    ),
+                    child: Stack(
+                      children: [
+                        // 内容显示区域
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(8),
+                              bottomRight: Radius.circular(8),
+                            ),
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Html(
+                                  data: widget.html,
+                                  style: {
+                                    "body": Style(
+                                      margin: Margins.zero,
+                                      padding: HtmlPaddings.zero,
+                                      fontSize: FontSize(30),
+                                      lineHeight: LineHeight.number(1.4),
+                                      color: Colors.white,
+                                      textDecoration: TextDecoration.none,
+                                    )
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // 底部控制栏
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(8),
+                                bottomRight: Radius.circular(8),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.keyboard_arrow_left,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _scrollSpeed = (_scrollSpeed - _speedStep)
+                                          .clamp(_minSpeed, _maxSpeed);
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _isScrolling ? Icons.pause : Icons.play_arrow,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _toggleScrolling,
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.keyboard_arrow_right,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _scrollSpeed = (_scrollSpeed + _speedStep)
+                                          .clamp(_minSpeed, _maxSpeed);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // 右下角大小调节手柄
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              setState(() {
+                                _overlayWidth = (_overlayWidth + details.delta.dx)
+                                    .clamp(200.0, 800.0);
+                                _overlayHeight = (_overlayHeight + details.delta.dy)
+                                    .clamp(200.0, 800.0);
+
+                                _updateOverlay();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              color: Colors.transparent,
+                              child: Icon(
+                                Icons.zoom_out_map,
+                                size: 18,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
+            )
+          ]
       ),
     );
   }
-}
+
+ */

@@ -1,7 +1,11 @@
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:pegacue/screens/teleprompter.dart';
+import 'package:pegacue/utils/tools.dart';
 import '../models/cue.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
@@ -313,8 +317,7 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-
-  Future<void> _openTeleprompter() async {
+  Future<void> _openTeleprompter(deltaJson) async {
     // 检查权限
     final status = await FlutterOverlayWindow.isPermissionGranted();
     if (!status) {
@@ -324,17 +327,21 @@ class _PrompterState extends State<Prompter> {
     // 打开悬浮窗
     if (await FlutterOverlayWindow.isActive()) return;
     await FlutterOverlayWindow.showOverlay(
-      enableDrag: false,
-      flag: OverlayFlag.defaultFlag,
-      visibility: NotificationVisibility.visibilityPublic,
-      positionGravity: PositionGravity.auto,
-      width: 1000,
-      height: 1500,
-      //startPosition: const OverlayPosition(0, 0),
-    );
+        enableDrag: false,
+        flag: OverlayFlag.defaultFlag,
+        visibility: NotificationVisibility.visibilityPublic,
+        positionGravity: PositionGravity.auto,
+        width: 1000,
+        height: 1500,
+        //startPosition: const OverlayPosition(0, 0),
+        );
 
-
-   // await FlutterOverlayWindow.resizeOverlay(350, 500, false);
+    // 获取注册的发送端口
+    final SendPort? htmlPort = IsolateNameServer.lookupPortByName('HTML_DATA_PORT');
+    if (htmlPort != null) {
+      // 发送 HTML 数据
+      htmlPort.send(deltaJsonToHtml(deltaJson));
+    }
   }
 
   Widget _buildFeatureItem(
@@ -357,10 +364,11 @@ class _PrompterState extends State<Prompter> {
                   ),
                 );
               } else if (title == '悬浮提词') {
-                _openTeleprompter();
+                _openTeleprompter(cue.deltaJson);
+                // SystemNavigator.pop();
               } else if (title == '拍摄提词') {
                 // 打开悬浮提词
-                _openTeleprompter();
+                _openTeleprompter(cue.deltaJson);
 
                 // 跳转摄像机
                 Navigator.push(
