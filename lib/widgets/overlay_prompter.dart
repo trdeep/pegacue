@@ -28,20 +28,23 @@ class OverlayPrompter extends StatefulWidget {
   State<OverlayPrompter> createState() => _OverlayPrompterState();
 }
 
-class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProviderStateMixin {
+class _OverlayPrompterState extends State<OverlayPrompter>
+    with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
-  Timer? _scrollTimer;
-  double _scrollSpeed = 1.0; // 每个周期滚动的像素数
-  bool _isScrolling = false; // 默认关闭自动滚动
+
   static const double _minSpeed = 0.5;
   static const double _maxSpeed = 10.0;
   static const double _speedStep = 0.5;
+
+  Timer? _scrollTimer;
+  double _scrollSpeed = 1.0; // 每个周期滚动的像素数
+  bool _isScrolling = false; // 默认关闭自动滚动
 
   // 悬浮框初始宽高
   double _overlayWidth = 350.0;
   double _overlayHeight = 500.0;
 
-  Offset position = const Offset(0, 100);
+  Offset position = Offset.zero;
   bool isDragging = false;
   bool isResizing = false;
 
@@ -71,8 +74,6 @@ class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProv
   }
 
   void _startScrolling() {
-    _updateOverlay();
-
     _isScrolling = true;
     _scrollTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (_scrollController.hasClients) {
@@ -82,16 +83,28 @@ class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProv
           _scrollController.jumpTo(newOffset);
         } else {
           _stopScrolling();
+          _scrollController.jumpTo(0);
         }
       }
     });
     setState(() {});
+
   }
 
   void _stopScrolling() {
     _scrollTimer?.cancel();
     _scrollTimer = null;
     _isScrolling = false;
+    _scrollSpeed = 1.0;
+
+    // 悬浮框初始宽高
+    _overlayWidth = 350.0;
+    _overlayHeight = 500.0;
+
+    position = Offset.zero;
+    isDragging = false;
+    isResizing = false;
+
     setState(() {});
   }
 
@@ -104,8 +117,10 @@ class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProv
   }
 
   Future<void> _updateOverlay() async {
-    await FlutterOverlayWindow.resizeOverlay(_overlayWidth.toInt(), _overlayHeight.toInt(), false);
-    await FlutterOverlayWindow.moveOverlay(OverlayPosition(position.dx, position.dy));
+    await FlutterOverlayWindow.resizeOverlay(
+        _overlayWidth.toInt(), _overlayHeight.toInt(), false);
+    await FlutterOverlayWindow.moveOverlay(
+        OverlayPosition(position.dx, position.dy));
   }
 
   @override
@@ -124,11 +139,13 @@ class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProv
                 if (isDragging) {
                   setState(() {
                     position += details.delta;
-                    _updateOverlay();
                   });
                 }
               },
-              onPanEnd: (details) => setState(() => isDragging = false),
+              onPanEnd: (details) {
+                setState(() => isDragging = false);
+                _updateOverlay(); // 拖动结束时更新位置
+              },
               child: Container(
                 width: _overlayWidth,
                 height: 40,
@@ -254,14 +271,13 @@ class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProv
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onPanUpdate: (details) async {
-                        final delta = details.delta;
-                        final dx = (_overlayWidth + delta.dx);
-                        final dy = (_overlayHeight + delta.dy);
-
+                      onPanUpdate: (details) {
                         setState(() {
-                          _overlayWidth = dx.clamp(200.0, 800.0);
-                          _overlayHeight = dy.clamp(200.0, 800.0);
+                          _overlayWidth = (_overlayWidth + details.delta.dx)
+                              .clamp(200.0, 800.0);
+                          _overlayHeight = (_overlayHeight + details.delta.dy)
+                              .clamp(200.0, 800.0);
+
                           _updateOverlay();
                         });
                       },

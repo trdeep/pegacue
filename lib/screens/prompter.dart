@@ -328,10 +328,13 @@ class _PrompterState extends State<Prompter> {
       flag: OverlayFlag.defaultFlag,
       visibility: NotificationVisibility.visibilityPublic,
       positionGravity: PositionGravity.auto,
-      // height: (MediaQuery.of(context).size.height * 0.6).toInt(),
-      // width: WindowSize.matchParent,
-      startPosition: const OverlayPosition(0, 100),
+      width: 1000,
+      height: 1500,
+      //startPosition: const OverlayPosition(0, 0),
     );
+
+
+   // await FlutterOverlayWindow.resizeOverlay(350, 500, false);
   }
 
   Widget _buildFeatureItem(
