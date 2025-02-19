@@ -155,7 +155,7 @@ class _EditCuePageState extends State<EditCuePage> {
           attribute: Attribute.underline,
           controller: _quillController,
         ),
-        QuillToolbarClearFormatButton(controller: _quillController),
+        // QuillToolbarClearFormatButton(controller: _quillController),
 
         QuillToolbarColorButton(
           controller: _quillController,
@@ -165,15 +165,15 @@ class _EditCuePageState extends State<EditCuePage> {
           controller: _quillController,
           isBackground: true,
         ),
-        //const VerticalDivider(),
-        // GestureDetector(
-        //   onTapDown: (_) => _hideKeyboard,
-        //   child: QuillToolbarFontSizeButton(
-        //     controller: _quillController,
-        //     options: const QuillToolbarFontSizeButtonOptions(
-        //       rawItemsMap: {'小字号': '8', '大字号': '30', '超大字号': '40', '清除': '0'},
-        //     ),
-        //   ),
-        // ),
+        const VerticalDivider(),
+        GestureDetector(
+          onTapDown: (_) => _hideKeyboard,
+          child: QuillToolbarFontSizeButton(
+            controller: _quillController,
+            options: const QuillToolbarFontSizeButtonOptions(
+              rawItemsMap: {'小字号': '8', '大字号': '30', '超大字号': '40', '清除': '0'},
+            ),
+          ),
+        ),
       ];
 }

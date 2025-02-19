@@ -13,9 +13,18 @@ import 'camera_prompter.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
 
-///
-/// 主界面
-///
+/// 提词器主界面
+/// 
+/// 提供以下功能：
+/// - 台词列表展示和管理
+/// - 悬浮提词功能
+/// - 拍摄提词功能
+/// - 提词板功能
+/// 
+/// 支持以下交互：
+/// - 新建台词
+/// - 选择台词进行提词
+/// - 管理已有台词
 class Prompter extends StatefulWidget {
   const Prompter({super.key});
 
@@ -24,7 +33,11 @@ class Prompter extends StatefulWidget {
 }
 
 class _PrompterState extends State<Prompter> {
+  /// 台词列表的异步加载对象
   late Future<List<Cue>> _cuesFuture;
+  
+  /// 悬浮窗口的入口点
+  /// 用于管理悬浮窗的显示和隐藏
   OverlayEntry? _overlayEntry;
 
   @override
@@ -50,8 +63,17 @@ class _PrompterState extends State<Prompter> {
     super.dispose();
   }
 
+  /// 从数据库获取所有台词
+  /// 
+  /// 返回台词列表的异步对象
+  /// 如果数据库操作失败，将抛出异常
   Future<List<Cue>> _fetchCues() async {
-    return await DatabaseHelper.instance.getAllCues();
+    try {
+      return await DatabaseHelper.instance.getAllCues();
+    } catch (e) {
+      debugPrint('获取台词列表失败: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -317,30 +339,56 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-  Future<void> _openTeleprompter(deltaJson) async {
-    // 检查权限
-    final status = await FlutterOverlayWindow.isPermissionGranted();
-    if (!status) {
-      await FlutterOverlayWindow.requestPermission();
-    }
+  /// 打开悬浮提词器
+  /// 
+  /// [deltaJson] 台词的富文本数据
+  /// 
+  /// 该方法会执行以下操作：
+  /// 1. 检查并请求悬浮窗权限
+  /// 2. 创建并显示悬浮窗
+  /// 3. 通过 IsolateNameServer 发送台词数据
+  Future<void> _openTeleprompter(String deltaJson) async {
+    try {
+      // 检查权限
+      final status = await FlutterOverlayWindow.isPermissionGranted();
+      if (!status) {
+        final permissionGranted = await FlutterOverlayWindow.requestPermission();
+        if (!permissionGranted!) {
+          throw Exception('未获得悬浮窗权限');
+        }
+      }
 
-    // 打开悬浮窗
-    if (await FlutterOverlayWindow.isActive()) return;
-    await FlutterOverlayWindow.showOverlay(
+      // 检查悬浮窗状态
+      if (await FlutterOverlayWindow.isActive()) {
+        debugPrint('悬浮窗已经处于活动状态');
+        return;
+      }
+
+      // 打开悬浮窗
+      await FlutterOverlayWindow.showOverlay(
         enableDrag: false,
         flag: OverlayFlag.defaultFlag,
         visibility: NotificationVisibility.visibilityPublic,
         positionGravity: PositionGravity.auto,
         width: 1000,
         height: 1500,
-        //startPosition: const OverlayPosition(0, 0),
-        );
+      );
 
-    // 获取注册的发送端口
-    final SendPort? htmlPort = IsolateNameServer.lookupPortByName('HTML_DATA_PORT');
-    if (htmlPort != null) {
-      // 发送 HTML 数据
+      // 获取注册的发送端口并发送数据
+      final SendPort? htmlPort = IsolateNameServer.lookupPortByName('HTML_DATA_PORT');
+      if (htmlPort == null) {
+        throw Exception('未找到 HTML_DATA_PORT');
+      }
+      
       htmlPort.send(deltaJsonToHtml(deltaJson));
+    } catch (e) {
+      debugPrint('打开悬浮提词器失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('打开悬浮提词器失败: $e')),
+        );
+      }
+      rethrow;
     }
   }
 

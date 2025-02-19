@@ -7,6 +7,14 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
 
+/// 悬浮提词器组件
+/// 
+/// 提供一个可拖动、可调整大小的悬浮窗口，用于显示台词内容。
+/// 支持以下功能：
+/// - 自动滚动文本显示
+/// - 可调节滚动速度
+/// - 窗口拖动和大小调整
+/// - 实时接收和显示 HTML 格式的台词
 class OverlayPrompter extends StatefulWidget {
   const OverlayPrompter({super.key});
 
@@ -16,30 +24,49 @@ class OverlayPrompter extends StatefulWidget {
 
 class _OverlayPrompterState extends State<OverlayPrompter>
     with SingleTickerProviderStateMixin {
+  /// 滚动控制器
   late ScrollController _scrollController;
 
+  /// 最小滚动速度（像素/帧）
   static const double _minSpeed = 0.5;
+  
+  /// 最大滚动速度（像素/帧）
   static const double _maxSpeed = 10.0;
+  
+  /// 速度调节步长
   static const double _speedStep = 0.5;
 
+  /// 滚动定时器
   Timer? _scrollTimer;
+  
+  /// HTML 格式的台词内容
   String? _html = '<h1>没有加载台词</h1>';
 
-  double _scrollSpeed = 1.0; // 每个周期滚动的像素数
-  bool _isScrolling = false; // 默认关闭自动滚动
+  /// 当前滚动速度（像素/帧）
+  double _scrollSpeed = 1.0;
+  
+  /// 是否正在自动滚动
+  bool _isScrolling = false;
 
-  // 悬浮框初始宽高
+  /// 悬浮窗口宽度
   double _overlayWidth = 350.0;
+  
+  /// 悬浮窗口高度
   double _overlayHeight = 500.0;
 
+  /// 窗口位置
   Offset position = Offset.zero;
+  
+  /// 是否正在拖动
   bool isDragging = false;
+  
+  /// 是否正在调整大小
   bool isResizing = false;
 
-  // 滚动控制
+  /// 滚动动画控制器
   late AnimationController _scrollAnimationController;
 
-  // 新增 ReceivePort 用于接收 HTML 数据
+  /// 用于接收 HTML 数据的端口
   final ReceivePort _htmlReceivePort = ReceivePort();
 
   @override
@@ -54,7 +81,6 @@ class _OverlayPrompterState extends State<OverlayPrompter>
 
   @override
   void dispose() {
-    // 注销注册的端口
     IsolateNameServer.removePortNameMapping('HTML_DATA_PORT');
     _htmlReceivePort.close();
     _stopScrolling();
@@ -63,14 +89,11 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     super.dispose();
   }
 
-  // 修改 _initShowHtml 使用 ReceivePort 接收数据
+  /// 初始化 HTML 数据接收
   void _initShowHtml() {
-    // 确保不存在同名注册
     IsolateNameServer.removePortNameMapping('HTML_DATA_PORT');
-    // 注册 ReceivePort 的发送端
     IsolateNameServer.registerPortWithName(
         _htmlReceivePort.sendPort, 'HTML_DATA_PORT');
-    // 监听接收数据
     _htmlReceivePort.listen((dynamic data) {
       if (data is String) {
         setState(() {
@@ -80,11 +103,14 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     });
   }
 
+  /// 关闭悬浮窗口
   Future<void> _closeOverlay() async {
     _stopScrolling();
+    _scrollController.jumpTo(0);
     await FlutterOverlayWindow.closeOverlay();
   }
 
+  /// 开始自动滚动
   void _startScrolling() {
     _isScrolling = true;
     _scrollTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
@@ -95,20 +121,20 @@ class _OverlayPrompterState extends State<OverlayPrompter>
           _scrollController.jumpTo(newOffset);
         } else {
           _stopScrolling();
+          _scrollController.jumpTo(0);
         }
       }
     });
     setState(() {});
   }
 
+  /// 停止自动滚动并重置状态
   void _stopScrolling() {
     _scrollTimer?.cancel();
     _scrollTimer = null;
     _isScrolling = false;
     _scrollSpeed = 1.0;
-    _scrollController.jumpTo(0);
 
-    // 悬浮框初始宽高
     _overlayWidth = 350.0;
     _overlayHeight = 500.0;
 
@@ -119,6 +145,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     setState(() {});
   }
 
+  /// 切换滚动状态
   void _toggleScrolling() {
     if (_isScrolling) {
       _stopScrolling();
@@ -127,6 +154,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     }
   }
 
+  /// 更新悬浮窗口大小和位置
   Future<void> _updateOverlay() async {
     await FlutterOverlayWindow.resizeOverlay(
         _overlayWidth.toInt(), _overlayHeight.toInt(), false);
@@ -152,7 +180,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
             },
             onPanEnd: (details) {
               setState(() => isDragging = false);
-              _updateOverlay(); // 拖动结束时更新位置
+              _updateOverlay();
             },
             child: Container(
               width: _overlayWidth,

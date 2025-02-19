@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:pegacue/screens/prompter.dart';
 import '../utils/tools.dart';
+import 'index.dart';
 
 /// 提词器页面组件
 ///
@@ -120,10 +120,15 @@ class _TeleprompterPageState extends State<TeleprompterPage>
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: SystemUiOverlay.values,
+        );
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const Prompter()),
+          MaterialPageRoute(builder: (context) => const IndexPage()),
         );
+
         return false;
       },
       child: Scaffold(
