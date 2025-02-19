@@ -95,7 +95,6 @@ class _OverlayPrompterState extends State<OverlayPrompter>
           _scrollController.jumpTo(newOffset);
         } else {
           _stopScrolling();
-          _scrollController.jumpTo(0);
         }
       }
     });
@@ -107,6 +106,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     _scrollTimer = null;
     _isScrolling = false;
     _scrollSpeed = 1.0;
+    _scrollController.jumpTo(0);
 
     // 悬浮框初始宽高
     _overlayWidth = 350.0;
@@ -204,7 +204,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
                       controller: _scrollController,
                       physics: const BouncingScrollPhysics(),
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.fromLTRB(15, 0, 5, 0),
                         child: Html(
                           data: _html,
                           style: {
@@ -214,7 +214,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
                                 fontSize: FontSize(30),
                                 lineHeight: LineHeight.number(1.4),
                                 color: Colors.white),
-                            "u": Style(textDecorationColor: Colors.white)
+                            "u": Style(textDecorationColor: Colors.redAccent)
                           },
                         ),
                       ),
