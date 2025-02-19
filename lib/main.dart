@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/translations.dart';
+import 'package:pegacue/widgets/overlay_prompter.dart';
 import 'screens/index.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  FlutterOverlayWindow.resizeOverlay(100, 100, true);
   runApp(const MyApp());
+}
+
+
+@pragma("vm:entry-point")
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: OverlayPrompterWidget(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

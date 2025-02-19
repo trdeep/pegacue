@@ -59,6 +59,7 @@ dependencies:
   simple_html_css: ^5.0.0
   html: ^0.15.4
   delta_to_html: ^0.2.2
+  window_manager: ^0.4.3
   #chewie: ^1.10.0
 
 dev_dependencies:

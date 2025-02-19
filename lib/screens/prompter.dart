@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:pegacue/screens/teleprompter.dart';
 import '../models/cue.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
-import '../widgets/floating_prompter.dart';
 import 'camera_prompter.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
@@ -313,17 +313,22 @@ class _PrompterState extends State<Prompter> {
     );
   }
 
-  Future<void> _startTeleprompter(title, content) async {
-    // 创建悬浮提词器
-    _overlayEntry = OverlayEntry(
-      builder: (context) => FloatingPrompterWidget(
-          title: title, content: content, overlayEntry: _overlayEntry!),
-    );
 
-    // 显示悬浮提词器
-    if (_overlayEntry != null) {
-      Overlay.of(context).insert(_overlayEntry!);
+  Future<void> _openTeleprompter() async {
+    // 检查权限
+    final status = await FlutterOverlayWindow.isPermissionGranted();
+    if (!status) {
+      await FlutterOverlayWindow.requestPermission();
     }
+
+    // 打开悬浮窗
+    if (await FlutterOverlayWindow.isActive()) return;
+    await FlutterOverlayWindow.showOverlay(
+      enableDrag: false,
+      visibility: NotificationVisibility.visibilityPublic,
+      positionGravity: PositionGravity.none,
+      startPosition: const OverlayPosition(0, 0),
+    );
   }
 
   Widget _buildFeatureItem(
@@ -346,10 +351,10 @@ class _PrompterState extends State<Prompter> {
                   ),
                 );
               } else if (title == '悬浮提词') {
-                _startTeleprompter(cue.title, cue.deltaJson);
+                _openTeleprompter();
               } else if (title == '拍摄提词') {
                 // 打开悬浮提词
-                _startTeleprompter(cue.title, cue.deltaJson);
+                _openTeleprompter();
 
                 // 跳转摄像机
                 Navigator.push(
