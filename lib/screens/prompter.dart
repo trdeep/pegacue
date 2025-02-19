@@ -325,9 +325,12 @@ class _PrompterState extends State<Prompter> {
     if (await FlutterOverlayWindow.isActive()) return;
     await FlutterOverlayWindow.showOverlay(
       enableDrag: false,
+      flag: OverlayFlag.defaultFlag,
       visibility: NotificationVisibility.visibilityPublic,
-      positionGravity: PositionGravity.none,
-      startPosition: const OverlayPosition(0, 0),
+      positionGravity: PositionGravity.auto,
+      // height: (MediaQuery.of(context).size.height * 0.6).toInt(),
+      // width: WindowSize.matchParent,
+      startPosition: const OverlayPosition(0, 100),
     );
   }
 

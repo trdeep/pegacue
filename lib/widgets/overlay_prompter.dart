@@ -28,8 +28,7 @@ class OverlayPrompter extends StatefulWidget {
   State<OverlayPrompter> createState() => _OverlayPrompterState();
 }
 
-class _OverlayPrompterState extends State<OverlayPrompter>
-    with SingleTickerProviderStateMixin {
+class _OverlayPrompterState extends State<OverlayPrompter> with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
   Timer? _scrollTimer;
   double _scrollSpeed = 1.0; // 每个周期滚动的像素数
@@ -42,7 +41,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   double _overlayWidth = 350.0;
   double _overlayHeight = 500.0;
 
-  Offset position = const Offset(10, 100);
+  Offset position = const Offset(0, 100);
   bool isDragging = false;
   bool isResizing = false;
 
@@ -53,7 +52,8 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _scrollAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 50));
+    _scrollAnimationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 50));
     _stopScrolling();
   }
 
@@ -71,6 +71,8 @@ class _OverlayPrompterState extends State<OverlayPrompter>
   }
 
   void _startScrolling() {
+    _updateOverlay();
+
     _isScrolling = true;
     _scrollTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (_scrollController.hasClients) {
@@ -101,187 +103,184 @@ class _OverlayPrompterState extends State<OverlayPrompter>
     }
   }
 
+  Future<void> _updateOverlay() async {
+    await FlutterOverlayWindow.resizeOverlay(_overlayWidth.toInt(), _overlayHeight.toInt(), false);
+    await FlutterOverlayWindow.moveOverlay(OverlayPosition(position.dx, position.dy));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: Stack(
-        children: [
-          Positioned(
-            left: position.dx,
-            top: position.dy,
-            child: SizedBox(
+      child: SizedBox(
+        width: _overlayWidth,
+        height: _overlayHeight,
+        child: Column(
+          children: [
+            // 顶部拖动区域
+            GestureDetector(
+              onPanStart: (details) => setState(() => isDragging = true),
+              onPanUpdate: (details) {
+                if (isDragging) {
+                  setState(() {
+                    position += details.delta;
+                    _updateOverlay();
+                  });
+                }
+              },
+              onPanEnd: (details) => setState(() => isDragging = false),
+              child: Container(
+                width: _overlayWidth,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: Text(''),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close,
+                          color: Colors.white.withOpacity(0.6)),
+                      onPressed: _closeOverlay,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // 内容区域
+            Container(
               width: _overlayWidth,
-              height: _overlayHeight,
-              child: Column(
+              height: _overlayHeight - 50,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+              ),
+              child: Stack(
                 children: [
-                  // 顶部拖动区域
-                  GestureDetector(
-                    onPanStart: (details) => setState(() => isDragging = true),
-                    onPanUpdate: (details) {
-                      if (isDragging) {
-                        setState(() {
-                          position += details.delta;
-                        });
-                      }
-                    },
-                    onPanEnd: (details) => setState(() => isDragging = false),
+                  // 内容显示区域
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Html(
+                            data: widget.html,
+                            style: {
+                              "body": Style(
+                                margin: Margins.zero,
+                                padding: HtmlPaddings.zero,
+                                fontSize: FontSize(30),
+                                lineHeight: LineHeight.number(1.4),
+                                color: Colors.white,
+                                textDecoration: TextDecoration.none,
+                              )
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 底部控制栏
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                     child: Container(
-                      width: _overlayWidth,
-                      height: 40,
+                      height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withOpacity(0.5),
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
+                          bottomLeft: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 16),
-                            child: Text(''),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.keyboard_arrow_left,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _scrollSpeed = (_scrollSpeed - _speedStep)
+                                    .clamp(_minSpeed, _maxSpeed);
+                              });
+                            },
                           ),
                           IconButton(
-                            icon: Icon(Icons.close,
-                                color: Colors.white.withOpacity(0.6)),
-                            onPressed: _closeOverlay,
+                            icon: Icon(
+                              _isScrolling ? Icons.pause : Icons.play_arrow,
+                              color: Colors.white,
+                            ),
+                            onPressed: _toggleScrolling,
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.keyboard_arrow_right,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _scrollSpeed = (_scrollSpeed + _speedStep)
+                                    .clamp(_minSpeed, _maxSpeed);
+                              });
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // 内容区域
-                  Container(
-                    width: _overlayWidth,
-                    height: _overlayHeight - 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
+                  // 右下角大小调节手柄
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onPanUpdate: (details) async {
+                        final delta = details.delta;
+                        final dx = (_overlayWidth + delta.dx);
+                        final dy = (_overlayHeight + delta.dy);
+
+                        setState(() {
+                          _overlayWidth = dx.clamp(200.0, 800.0);
+                          _overlayHeight = dy.clamp(200.0, 800.0);
+                          _updateOverlay();
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        color: Colors.transparent,
+                        child: Icon(
+                          Icons.zoom_out_map,
+                          size: 18,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
                       ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // 内容显示区域
-                        Positioned.fill(
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(8),
-                              bottomRight: Radius.circular(8),
-                            ),
-                            child: SingleChildScrollView(
-                              controller: _scrollController,
-                              physics: const BouncingScrollPhysics(),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Html(
-                                  data: widget.html,
-                                  style: {
-                                    "body": Style(
-                                      margin: Margins.zero,
-                                      padding: HtmlPaddings.zero,
-                                      fontSize: FontSize(30),
-                                      lineHeight: LineHeight.number(1.4),
-                                      color: Colors.white,
-                                      textDecoration: TextDecoration.none,
-                                    )
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // 底部控制栏
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.5),
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(8),
-                                bottomRight: Radius.circular(8),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_left,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _scrollSpeed = (_scrollSpeed - _speedStep)
-                                          .clamp(_minSpeed, _maxSpeed);
-                                    });
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    _isScrolling
-                                        ? Icons.pause
-                                        : Icons.play_arrow,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: _toggleScrolling,
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_right,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _scrollSpeed = (_scrollSpeed + _speedStep)
-                                          .clamp(_minSpeed, _maxSpeed);
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // 右下角大小调节手柄
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onPanUpdate: (details) {
-                              setState(() {
-                                _overlayWidth =
-                                    (_overlayWidth + details.delta.dx)
-                                        .clamp(200.0, 800.0);
-                                _overlayHeight =
-                                    (_overlayHeight + details.delta.dy)
-                                        .clamp(200.0, 800.0);
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              color: Colors.transparent,
-                              child: Icon(
-                                Icons.zoom_out_map,
-                                size: 18,
-                                color: Colors.white.withOpacity(0.6),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
