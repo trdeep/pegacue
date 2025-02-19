@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
@@ -88,6 +89,7 @@ class _CameraPrompterPageState extends State<CameraPrompterPage> {
 
   @override
   void dispose() {
+    FlutterOverlayWindow.closeOverlay();
     super.dispose();
   }
 

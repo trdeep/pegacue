@@ -6,7 +6,7 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
 
-class OverlayPrompterWidget extends StatefulWidget {
+class OverlayPrompter extends StatefulWidget {
   final html = '''
   <div>
     <p>尊敬的数码发展及<strong>新闻</strong>部长兼内政部第二部长 杨莉明女士</p>
@@ -22,50 +22,51 @@ class OverlayPrompterWidget extends StatefulWidget {
   </div>
   ''';
 
-  const OverlayPrompterWidget({
-    super.key
-  });
+  const OverlayPrompter({super.key});
 
   @override
-  State<OverlayPrompterWidget> createState() => _OverlayPrompterWidgetState();
+  State<OverlayPrompter> createState() => _OverlayPrompterState();
 }
 
-class _OverlayPrompterWidgetState extends State<OverlayPrompterWidget> {
+class _OverlayPrompterState extends State<OverlayPrompter>
+    with SingleTickerProviderStateMixin {
   late ScrollController _scrollController;
   Timer? _scrollTimer;
   double _scrollSpeed = 1.0; // 每个周期滚动的像素数
-  bool _isScrolling = false;
+  bool _isScrolling = false; // 默认关闭自动滚动
   static const double _minSpeed = 0.5;
   static const double _maxSpeed = 10.0;
   static const double _speedStep = 0.5;
 
   // 悬浮框初始宽高
-  double _overlayWidth = 400.0;
-  double _overlayHeight = 600.0;
+  double _overlayWidth = 350.0;
+  double _overlayHeight = 500.0;
 
-  Offset position = const Offset(20, 100);
+  Offset position = const Offset(10, 100);
   bool isDragging = false;
   bool isResizing = false;
 
   // 滚动控制
   late AnimationController _scrollAnimationController;
-  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _scrollAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 50));
+    _stopScrolling();
   }
 
   @override
   void dispose() {
-    _scrollTimer?.cancel();
+    _stopScrolling();
     _scrollAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _closeOverlay() async {
+    _stopScrolling();
     await FlutterOverlayWindow.closeOverlay();
   }
 
@@ -78,8 +79,7 @@ class _OverlayPrompterWidgetState extends State<OverlayPrompterWidget> {
         if (newOffset < maxExtent) {
           _scrollController.jumpTo(newOffset);
         } else {
-          // 回到顶部实现循环滚动
-          _scrollController.jumpTo(0);
+          _stopScrolling();
         }
       }
     });
@@ -286,4 +286,3 @@ class _OverlayPrompterWidgetState extends State<OverlayPrompterWidget> {
     );
   }
 }
-
