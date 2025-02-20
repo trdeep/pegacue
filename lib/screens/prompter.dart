@@ -7,7 +7,9 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:pegacue/screens/teleprompter.dart';
 import 'package:pegacue/utils/tools.dart';
 import '../models/cue.dart';
+import '../services/global.dart';
 import '../widgets/cue_selector_dialog.dart';
+import 'bluetooth_scan.dart';
 import 'camera_prompter.dart';
 import 'edit_cue.dart';
 import '../utils/database_helper.dart';
@@ -141,20 +143,36 @@ class _PrompterState extends State<Prompter> {
                           color: Colors.orange[400],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline,
-                            color: Colors.orange, size: 32),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const EditCuePage()),
-                          ).then((_) {
-                            setState(() {
-                              _cuesFuture = _fetchCues();
-                            });
-                          });
-                        },
+                      Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.orange, size: 32),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const BluetoothScanScreen()),
+                              ).then((_) {
+                                setState(() {
+                                  _cuesFuture = _fetchCues();
+                                });
+                              });
+                            },
+                          ),
+                          Positioned(
+                            right: 8,
+                            bottom: 30,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Global.connectedDevices.isEmpty ? Colors.grey : Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
