@@ -67,23 +67,100 @@ class CueCard extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  // 在现有的 PopupMenuButton 部分替换为以下代码
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == '删除') {
-                        _deleteCue(context);
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              title: Row(
+                                children: [
+                                  Icon(Icons.delete_outline,
+                                      color: Colors.red[400], size: 24),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    '删除台词',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                ],
+                              ),
+                              content: Text(
+                                '确定要删除"${cue.title}"吗？\n删除后将无法恢复。',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.5,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: Text(
+                                    '取消',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    _deleteCue(context);
+                                  },
+                                  child: Text(
+                                    '删除',
+                                    style: TextStyle(
+                                      color: Colors.red[400],
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       }
                     },
+                    elevation: 2,
+                    position: PopupMenuPosition.under,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     itemBuilder: (BuildContext context) {
                       return [
-                        const PopupMenuItem<String>(
+                        PopupMenuItem<String>(
                           value: '删除',
-                          child: Text('删除'),
+                          height: 40,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: Colors.grey[700],
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '删除',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ];
                     },
                     icon: const Icon(
                       Icons.more_horiz,
                       color: Colors.grey,
+                      size: 20,
                     ),
                   ),
                 ],
@@ -105,8 +182,7 @@ class CueCard extends StatelessWidget {
                   Text(
                     date,
                     style: TextStyle(
-                      fontSize:
-                          MediaQuery.of(context).size.width * 0.028, // 动态计算字体大小
+                      fontSize: MediaQuery.of(context).size.width * 0.028,
                       color: Colors.grey[400],
                     ),
                   ),
@@ -115,8 +191,7 @@ class CueCard extends StatelessWidget {
                       Text(
                         '${cue.wordCount}字/预计录${_formatDuration((cue.wordCount / 2).toInt())}',
                         style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width *
-                              0.028, // 动态计算字体大小
+                          fontSize: MediaQuery.of(context).size.width * 0.028,
                           color: Colors.grey[400],
                         ),
                       ),
