@@ -4,7 +4,6 @@ import '../utils/database_helper.dart';
 import '../models/cue.dart';
 import 'dart:convert' as convert;
 
-import '../utils/tools.dart';
 ///
 /// 编辑台词
 ///
@@ -40,6 +39,7 @@ class _EditCuePageState extends State<EditCuePage> {
       _quillController.document =
           Document.fromJson(convert.jsonDecode(widget.deltaJson!));
     }
+    _quillController.editorFocusNode = _focusNode;
   }
 
   @override
@@ -55,6 +55,7 @@ class _EditCuePageState extends State<EditCuePage> {
           children: [
             TextField(
               controller: _titleController,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w300),
               decoration: const InputDecoration(
                 labelText: '标题',
                 border: OutlineInputBorder(),

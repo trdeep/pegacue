@@ -80,6 +80,7 @@ class _TeleprompterPageState extends State<TeleprompterPage>
         // 当滚动到底部时，自动回到顶部
         if (currentScroll >= maxScroll) {
           _scrollController.jumpTo(0);
+          _toggleScroll();
         } else {
           // 使用 jumpTo 而不是 animateTo 以避免动画叠加导致的性能问题
           _scrollController.jumpTo(currentScroll + _scrollSpeed);
@@ -143,7 +144,7 @@ class _TeleprompterPageState extends State<TeleprompterPage>
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(15, 0, 5, 0),
                 child: Html(
-                  data: deltaJsonToHtmlFull(widget.deltaJson),
+                  data: deltaJsonToHtml(widget.deltaJson),
                   style: {
                     "body": Style(
                       margin: Margins.zero,

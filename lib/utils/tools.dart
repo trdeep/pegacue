@@ -1,22 +1,23 @@
-import 'package:delta_to_html/delta_to_html.dart';
+// import 'package:delta_to_html/delta_to_html.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'dart:convert' as convert;
 
 ///
 /// 工具类
 ///
-String deltaJsonToHtmlFull(String json) {
-  List delta = convert.jsonDecode(json);
-  return DeltaToHTML.encodeJson(delta);
-}
-
 String deltaJsonToHtml(String json) {
+  // List delta = convert.jsonDecode(json);
+  // return DeltaToHTML.encodeJson(delta);
+  return deltaJsonToHtmlLocal(json);
+}
+
+String deltaJsonToHtmlLocal(String json) {
   final delta = Delta.fromJson(convert.jsonDecode(json));
-  return deltaToHtml(delta);
+  return deltaToHtmlLocal(delta);
 }
 
 
-String deltaToHtml(Delta delta) {
+String deltaToHtmlLocal(Delta delta) {
   final StringBuffer htmlBuffer = StringBuffer();
 
   for (final op in delta.toList()) {

@@ -268,7 +268,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
                       children: [
                         IconButton(
                           icon: const Icon(
-                            Icons.keyboard_arrow_left,
+                            Icons.keyboard_double_arrow_left,
                             color: Colors.white,
                           ),
                           onPressed: () {
@@ -287,7 +287,7 @@ class _OverlayPrompterState extends State<OverlayPrompter>
                         ),
                         IconButton(
                           icon: const Icon(
-                            Icons.keyboard_arrow_right,
+                            Icons.keyboard_double_arrow_right,
                             color: Colors.white,
                           ),
                           onPressed: () {
