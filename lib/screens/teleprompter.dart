@@ -26,6 +26,10 @@ class TeleprompterPage extends StatefulWidget {
 
 class _TeleprompterPageState extends State<TeleprompterPage>
     with SingleTickerProviderStateMixin {
+
+  /// 内容区域的内边距
+  static const contentPadding = EdgeInsets.fromLTRB(15, 0, 5, 80); // 底部留出控制按钮的空间
+
   /// 滚动控制器，用于控制文本滚动
   late ScrollController _scrollController;
 
@@ -130,78 +134,103 @@ class _TeleprompterPageState extends State<TeleprompterPage>
           context,
           MaterialPageRoute(builder: (context) => const IndexPage()),
         );
-
         return false;
       },
+
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            // 内容区域
-            SingleChildScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(15, 0, 5, 0),
-                child: Html(
-                  data: deltaJsonToHtml(widget.deltaJson),
-                  style: {
-                    "body": Style(
-                      margin: Margins.zero,
-                      padding: HtmlPaddings.zero,
-                      fontSize: FontSize(40),
-                      lineHeight: LineHeight.number(1.5),
-                      color: Colors.white,
-                      textDecoration: TextDecoration.none,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // 内容区域 - 使用 LayoutBuilder 确保充满可用空间
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Padding(
+                        padding: contentPadding,
+                        child: Html(
+                          data: deltaJsonToHtml(widget.deltaJson),
+                          style: {
+                            "body": Style(
+                              margin: Margins.zero,
+                              padding: HtmlPaddings.zero,
+                              fontSize: FontSize(40),
+                              lineHeight: LineHeight.number(1.5),
+                              color: Colors.white,
+                              textDecoration: TextDecoration.none,
+                            ),
+                            "u": Style(textDecorationColor: Colors.redAccent)
+                          },
+                        ),
+                      ),
                     ),
-                    "u": Style(textDecorationColor: Colors.redAccent)
-                  },
+                  );
+                },
+              ),
+
+              // 控制按钮 - 使用 Align 确保始终在底部
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  padding: const EdgeInsets.only(bottom: 25),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0),
+                        Colors.black.withOpacity(0.8),
+                      ],
+                      stops: const [0.0, 0.5],
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 减速按钮
+                      FloatingActionButton.small(
+                        heroTag: 'decreaseSpeed',
+                        onPressed: () => _adjustSpeed(false),
+                        backgroundColor: Colors.orange.withOpacity(0.7),
+                        child: const Icon(Icons.keyboard_double_arrow_left,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      // 播放/暂停按钮
+                      FloatingActionButton(
+                        heroTag: 'toggleScroll',
+                        onPressed: _toggleScroll,
+                        backgroundColor: Colors.orange.withOpacity(0.7),
+                        child: Icon(
+                          _isScrolling ? Icons.pause : Icons.play_arrow,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // 加速按钮
+                      FloatingActionButton.small(
+                        heroTag: 'increaseSpeed',
+                        onPressed: () => _adjustSpeed(true),
+                        backgroundColor: Colors.orange.withOpacity(0.7),
+                        child: const Icon(Icons.keyboard_double_arrow_right,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // 控制按钮
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 25,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 减速按钮
-                  FloatingActionButton.small(
-                    heroTag: 'decreaseSpeed',
-                    onPressed: () => _adjustSpeed(false),
-                    backgroundColor: Colors.orange.withOpacity(0.7),
-                    child: const Icon(Icons.keyboard_double_arrow_left,
-                        color: Colors.white),
-                  ),
-                  const SizedBox(width: 16),
-                  // 播放/暂停按钮
-                  FloatingActionButton(
-                    heroTag: 'toggleScroll',
-                    onPressed: _toggleScroll,
-                    backgroundColor: Colors.orange.withOpacity(0.7),
-                    child: Icon(
-                      _isScrolling ? Icons.pause : Icons.play_arrow,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // 加速按钮
-                  FloatingActionButton.small(
-                    heroTag: 'increaseSpeed',
-                    onPressed: () => _adjustSpeed(true),
-                    backgroundColor: Colors.orange.withOpacity(0.7),
-                    child: const Icon(Icons.keyboard_double_arrow_right,
-                        color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+
   }
 
   @override
@@ -219,3 +248,5 @@ class _TeleprompterPageState extends State<TeleprompterPage>
     super.dispose();
   }
 }
+
+
