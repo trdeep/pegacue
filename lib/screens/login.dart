@@ -35,26 +35,25 @@ class _LoginPageState extends State<LoginPage> {
               fit: BoxFit.cover,
             ),
           ),
-          // 返回按钮
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 10,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black54),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
           // 主要内容
           SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 200),
+                  // 返回按钮区域
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 4),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black54),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  const SizedBox(height: 150), // 调整间距
                   Container(
                     padding: const EdgeInsets.all(20.0),
                     decoration: const BoxDecoration(
-                     color: Color(0xFFF9F9F9),
+                      color: Color(0xFFF9F9F9),
                       // color: Colors.blue,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20),
@@ -64,122 +63,151 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                  const SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
-                  // 登录表单
-                  const Text(
-                    '登录',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // 手机号输入框
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      hintText: '手机号',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // 验证码输入框和获取验证码按钮
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _codeController,
-                          keyboardType: TextInputType.number,
+                        // 登录表单
+                         Text(
+                          '登录',
+                          style: TextStyle(
+                            color: Colors.black.withOpacity(0.8),
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // 手机号输入框
+                        TextField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(
-                            hintText: '短信验证码',
+                            hintText: '手机号',
                             filled: true,
                             fillColor: Colors.white,
+                            prefixIcon:
+                                Icon(Icons.phone_android, color: Colors.grey),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8)),
-                              borderSide: BorderSide.none,
-                            ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(8)),
+                                borderSide: BorderSide.none),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          // TODO: 实现获取验证码逻辑
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          '获取验证码',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // 登录按钮
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _agreedToTerms
-                          ? () {
-                              // TODO: 实现登录逻辑
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        '登录',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                        const SizedBox(height: 20),
-                        // 用户协议
+                        const SizedBox(height: 16),
+                        // 验证码输入框和获取验证码按钮
                         Row(
                           children: [
-                            Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
+                            Expanded(
+                              child: TextField(
+                                controller: _codeController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  hintText: '验证码',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: Colors.grey,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
                             ),
-                            const Text('我已阅读并同意'),
-                            TextButton(
+                            const SizedBox(width: 16),
+                            ElevatedButton(
                               onPressed: () {
-                                // TODO: 显示用户协议
+                                // TODO: 实现获取验证码逻辑
                               },
-                              child: const Text('《用户协议》'),
-                            ),
-                            const Text('和'),
-                            TextButton(
-                              onPressed: () {
-                                // TODO: 显示隐私政策
-                              },
-                              child: const Text('《隐私政策》'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orangeAccent,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                '获取验证码',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 250),
+                        const SizedBox(height: 32),
+
+                        // 登录按钮
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _agreedToTerms
+                                ? () {
+                                    // TODO: 实现登录逻辑
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              '登录',
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // 用户协议
+                      // 用户协议
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _agreedToTerms,
+                            fillColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return Colors.orange;
+                              }
+                              return Colors.white;
+                            }),
+                            onChanged: (value) {
+                              setState(() {
+                                _agreedToTerms = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('我已阅读并同意'),
+                          TextButton(
+                            onPressed: () {
+                              // TODO: 显示用户协议
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('《用户协议》'),
+                          ),
+                          const Text('和'),
+                          TextButton(
+                            onPressed: () {
+                              // TODO: 显示隐私政策
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('《隐私政策》'),
+                          ),
+                        ],
+                      ),
+
+                        // 最后一个SizedBox，目的是把剩余的空白填满
+                        const SizedBox(height: 230),
                       ],
                     ),
                   ),

@@ -45,5 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>picture-in-picture</string>
+	</array>
+	<key>NSPictureInPictureUsageDescription</key>
+	<string>使用画中画功能显示提词器内容</string>
 </dict>
 </plist>

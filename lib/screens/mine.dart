@@ -12,7 +12,7 @@ class Mine extends StatefulWidget {
 }
 
 class _MineState extends State<Mine> {
-  bool isLoggedIn = false; // 登录状态
+  bool isLoggedIn = true; // 登录状态
   String? phoneNumber = '13169919969'; // 用户手机号
 
   @override
@@ -63,8 +63,12 @@ class _MineState extends State<Mine> {
                             }
                           },
                           child: Text(
-                            isLoggedIn ? (phoneNumber ?? '') : '当前未登录',
-                            style: Theme.of(context).textTheme.titleLarge,
+                            isLoggedIn ? (phoneNumber ?? '') : '未登录',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.8),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const Spacer(),
@@ -105,7 +109,7 @@ class _MineState extends State<Mine> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            '开通VIP不限制使用时长',
+                            '您是VIP不限制使用时长',
                             style: TextStyle(color: Colors.white70),
                           ),
                           const SizedBox(height: 16),
@@ -162,12 +166,12 @@ class _MineState extends State<Mine> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildFeatureItem(Icons.book, Colors.orange, '教程'),
+                      _buildFeatureItem(Icons.border_clear, Colors.orange, '悬浮'),
                       _buildFeatureItem(
-                          Icons.person_outline, Colors.blue, '联系老师'),
+                          Icons.access_time, Colors.blue, '无限时长'),
                       _buildFeatureItem(
-                          Icons.star_outline, Colors.orange, '关注·学习'),
-                      _buildFeatureItem(Icons.share, Colors.red, '分享'),
+                          Icons.receipt_long_sharp, Colors.green, '无限台词'),
+                      _buildFeatureItem(Icons.share, Colors.red, '邀请码'),
                     ],
                   ),
                 ],
@@ -218,7 +222,7 @@ class _MineState extends State<Mine> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text(
-                          '可提现',
+                          '推广大使',
                           style: TextStyle(color: Colors.red, fontSize: 12),
                         ),
                       ),

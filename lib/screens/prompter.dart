@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -10,6 +11,7 @@ import '../models/cue.dart';
 import '../services/global.dart';
 import '../widgets/cue_list_card.dart';
 import '../widgets/cue_selector_dialog.dart';
+import '../widgets/ios_prompter.dart';
 import 'bluetooth_scan.dart';
 import 'camera_prompter.dart';
 import 'edit_cue.dart';
@@ -60,6 +62,18 @@ class _PrompterState extends State<Prompter> {
 
   Future<void> _openTeleprompter(String deltaJson) async {
     try {
+      if (Platform.isIOS) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => IOSPrompter(
+              html: deltaJsonToHtml(deltaJson),
+            ),
+          ),
+        );
+        return;
+      }
+
       final status = await FlutterOverlayWindow.isPermissionGranted();
       if (!status) {
         final permissionGranted = await FlutterOverlayWindow.requestPermission();
